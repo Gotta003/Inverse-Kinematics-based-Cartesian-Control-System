@@ -110,22 +110,3 @@ touch simulation/mujoco_demo.py
 touch hardware/lerobot_demo.py
 touch tests/test_fk.py
 touch tests/test_ik.py
-
-if [ ! -f "README.md" ]; then
-    cat << 'EOF' > README.md
-
-# LeRobot SO-101 Inverse Kinematics & Cartesian Control
-
-## Team Members
-- Member 1
-- Member 2
-- Member 3
-
-## Project Description
-Inverse-kinematics-based Cartesian control system for the LeRobot SO-101 robotic arm.
-
-## Installation / Setup
-Run setup script:
-```bash
-chmod +x setup.sh
-./setup.sh
