@@ -13,6 +13,8 @@ def print_matrix(m, name="Matrix", decimals=4, width=11):
     for row in m:
         print("".join(f"{x:>{width}.{decimals}f}" for x in row))
 
+
+
 OMEGA=np.array([
     [0, 0, -1],
     [0, 1, 0],
@@ -41,10 +43,15 @@ def vectorial_product(A, B):
 
 V=vectorial_product(POSITIONS, OMEGA)
 
+theta_cal=2.789
+def deg_to_rad(theta):
+    return theta_cal*np.pi/180
+theta_cal=deg_to_rad(theta_cal)
+
 M=np.array([
     [1, 0, 0, 391.3619],
-    [0, 1, 0, -0.0113],
-    [0, 0, 1, 226.4687],
+    [0, np.cos(theta_cal), -np.sin(theta_cal), -0.0113],
+    [0, np.sin(theta_cal), np.cos(theta_cal), 226.4687],
     [0,0,0,1]
 ])
 

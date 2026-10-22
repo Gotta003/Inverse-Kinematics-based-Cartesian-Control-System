@@ -1,5 +1,8 @@
 import time
 import mujoco
+import numpy as np
+
+N_JOINTS=5
 
 def convert_to_dictionary(qpos):
     """
