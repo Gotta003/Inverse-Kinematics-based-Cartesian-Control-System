@@ -12,6 +12,13 @@ def vectorial_product(A, B):
     return np.array(results)
 
 
+def position_error(A, B):
+    return float(np.linalg.norm(A[:3, 3]-B[:3, 3]))
+
+def rotation_error(A, B):
+    cos_angle=(np.trace(A.T@B)-1.0)/2.0
+    return float(np.arccos(np.clip(cos_angle, -1.0, 1.0)))
+
 def deg_to_rad(theta_cal):
     return theta_cal * np.pi / 180
 

@@ -13,7 +13,14 @@ from src.utils.helper import deg_to_rad, vectorial_product
 theta_cal = 2.789
 theta_cal = deg_to_rad(theta_cal)
 
-N_JOINTS = 5
+JOINT_NAMES={
+    "shoulder_pan",
+    "shoulder_lift",
+    "elbow_flex",
+    "wrist_flex",
+    "wrist_roll",
+}
+N_JOINTS=len(JOINT_NAMES)
 
 M = np.array(
     [

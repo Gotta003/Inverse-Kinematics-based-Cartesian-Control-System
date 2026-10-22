@@ -13,22 +13,12 @@ import numpy as np
 import pytest
 
 from src.forward_kinematics import SO_101_fk
-from src.utils.constants import N_JOINTS, N_RANDOMS, POS_TOL, POSES, RND_SEED, ROT_TOL
-from src.utils.helper import derive_limits
-from utils.so101_mujoco_utils import mujoco_starting, mujoco_tcp
+from src.utils.helper import derive_limits, position_error, rotation_error
+from src.utils.constants import N_JOINTS,  POSES, RND_SEED, N_RANDOMS, POS_TOL, ROT_TOL
+from utils.so101_mujoco_utils import mujoco_tcp, mujoco_starting
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCENE_XML = REPO_ROOT / "model_files" / "scene.xml"
-
-
-# Compare against Mujoco
-def position_error(A, B):
-    return float(np.linalg.norm(A[:3, 3] - B[:3, 3]))
-
-
-def rotation_error(A, B):
-    cos_angle = (np.trace(A.T @ B) - 1.0) / 2.0
-    return float(np.arccos(np.clip(cos_angle, -1.0, 1.0)))
 
 
 @pytest.fixture(scope="module")
