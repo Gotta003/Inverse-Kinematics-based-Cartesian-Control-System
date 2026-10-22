@@ -1,0 +1,16 @@
+name: Auto Update Feature Branches
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  update-branches:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Auto-update open PRs
+        uses: admiralaw/auto-update-pr-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          base_branch: main
