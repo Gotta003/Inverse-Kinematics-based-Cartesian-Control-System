@@ -6,5 +6,3 @@ def matrix_exp6(S, theta):
 
 def forward_kinematics(q): #Exponential Product
     return
-
-CIAO CIAO CIAO
