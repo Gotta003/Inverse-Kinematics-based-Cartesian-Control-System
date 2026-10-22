@@ -25,6 +25,7 @@ import matplotlib.pyplot as plt
 import mujoco
 import numpy as np
 from src.forward_kinematics import SO_101_fk
+from src.utils.constants import POSES
 
 SCENE_XML=REPO_ROOT/"model_files"/"scheme.xml"
 DATA_DIR=REPO_ROOT/"results"/"data"

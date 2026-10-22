@@ -185,3 +185,23 @@ def hold_sim(m, d, viewer, duration):
         time_until_next_step = m.opt.timestep - (time.time() - step_start)
         if time_until_next_step > 0:
             time.sleep(time_until_next_step)
+            
+def mujoco_starting(path_xml):
+    m = mujoco.MjModel.from_xml_path(path_xml)
+    d = mujoco.MjData(m)
+    site_id = m.site("gripperframe").id
+    return m, d, site_id
+    
+def mujoco_tcp(mj, q, gripper=0.0):
+    m, d, site_id = mj
+    joint_limits={
+        m.joint(i).name: m.jnt_range[i].tolist() for i in range(m.njnt)
+    }
+    assert f"All Joint Limits: {joint_limits}"
+    d.qpos[:N_JOINTS] = q
+    d.qpos[N_JOINTS] = gripper
+    mujoco.mj_forward(m, d)
+    T = np.eye(4)
+    T[:3, :3] = d.site_xmat[site_id].reshape(3, 3)
+    T[:3, 3] = d.site_xpos[site_id]
+    return T

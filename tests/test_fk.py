@@ -12,9 +12,7 @@ import numpy as np
 from src.forward_kinematics import SO_101_fk
 from src.utils.helper import derive_limits
 from src.utils.constants import N_JOINTS,  POSES, RND_SEED, N_RANDOMS, POS_TOL, ROT_TOL
-import mujoco
-import mujoco.viewer
- #from utils.so101_mujoco_utils import mujoco_tcp
+from utils.so101_mujoco_utils import mujoco_tcp, mujoco_starting
 
 REPO_ROOT=Path(__file__).resolve().parent.parent
 SCENE_XML=REPO_ROOT/"model_files"/"scene.xml"
@@ -27,25 +25,9 @@ def rotation_error(A, B):
     cos_angle=(np.trace(A.T@B)-1.0)/2.0
     return float(np.arccos(np.clip(cos_angle, -1.0, 1.0)))
 
-def mujoco_tcp(mj, q, gripper=0.0):
-    m, d, site_id = mj
-    joint_limits={
-        m.joint(i).name: m.jnt_range[i].tolist() for i in range(m.njnt)
-    }
-    assert f"All Joint Limits: {joint_limits}"
-    d.qpos[:N_JOINTS] = q
-    d.qpos[N_JOINTS] = gripper
-    mujoco.mj_forward(m, d)
-    T = np.eye(4)
-    T[:3, :3] = d.site_xmat[site_id].reshape(3, 3)
-    T[:3, 3] = d.site_xpos[site_id]
-    return T
-
 @pytest.fixture(scope="module")
 def mj():
-    m = mujoco.MjModel.from_xml_path(str(SCENE_XML))
-    d = mujoco.MjData(m)
-    site_id = m.site("gripperframe").id
+    m, d, site_id=mujoco_starting(str(SCENE_XML))
     global JOINT_LIMITS
     JOINT_LIMITS=derive_limits(m, N_JOINTS)
     return m, d, site_id
