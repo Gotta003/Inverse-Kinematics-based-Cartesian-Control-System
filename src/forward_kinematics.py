@@ -3,6 +3,51 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import numpy as np
 
+def print_matrix(m, name="Matrix", decimals=4, width=11):
+    m=np.atleast_2d(np.squeeze(np.array(m, dtype=float)))
+    m=np.round(m, decimals)+0.0
+    total=width*m.shape[1]
+    print("="*total)
+    print(name.center(total))
+    print("="*total)
+    for row in m:
+        print("".join(f"{x:>{width}.{decimals}f}" for x in row))
+
+OMEGA=np.array([
+    [0, 0, -1],
+    [0, 1, 0],
+    [0, 1, 0],
+    [0, 1, 0],
+    [-1, 0, 0],
+])
+
+POSITIONS=np.array([
+    [38.8353, 0, 0],
+    [69.2345, -18.2778, 116.6],
+    [97.2345, -18.2778, 229.1700],
+    [232.1345, -0.1778, 234.37],
+    [293.2345, -0.1778, 234.37],
+])
+
+def vectorial_product(A, B):
+    results=[]
+    for i, _ in enumerate(A):
+        prod=[]
+        prod.append(A[i][1]*B[i][2]-A[i][2]*B[i][1])
+        prod.append(A[i][2]*B[i][0]-A[i][0]*B[i][2])
+        prod.append(A[i][0]*B[i][1]-A[i][1]*B[i][0])
+        results.append(prod)
+    return np.array(results)        
+
+V=vectorial_product(POSITIONS, OMEGA)
+
+M=np.array([
+    [1, 0, 0, 391.3619],
+    [0, 1, 0, -0.0113],
+    [0, 0, 1, 226.4687],
+    [0,0,0,1]
+])
+
 def vec_to_matrix(V):
     return np.array([
         [0,   -V[2],  V[1]],
@@ -10,58 +55,45 @@ def vec_to_matrix(V):
         [-V[1],  V[0],   0],
     ])
 
-def matrix_exp(S, theta):
-    omega = S[0:3]
-    v = S[3:6]
+def matrix_exp(omega, v, theta):
     w_mat = vec_to_matrix(omega)
-    
     # rodrigues formula
     R = np.eye(3) + np.sin(theta) * w_mat + (1 - np.cos(theta)) * (w_mat @ w_mat)
-    
     # Translation vector p
     V = np.eye(3) * theta + (1 - np.cos(theta)) * w_mat + (theta - np.sin(theta)) * (w_mat @ w_mat)
     p = V @ v
-    
     # Assemble 4x4 transformation matrix
     T = np.eye(4)
     T[0:3, 0:3] = R
     T[0:3, 3] = p
-    
     return T
 
-def UR3_fk(q_list):
-    if len(np.asarray(q_list).flatten()) != 6:
+def SO_101_fk(q_list):
+    if len(np.asarray(q_list).flatten()) != 5:
         raise ValueError("Shape of the position array is wrong")
-    
-    M = np.array([
-        [1, 0, 0, -192],
-        [0, 1, 0, 0],
-        [0, 0, 1, 692],
-        [0, 0, 0, 1]
-    ])
-    
-    S1 = np.array([0, 0, 1, 0, 0, 0])
-    S2 = np.array([1, 0, 0, 0, 152, 0])
-    S3 = np.array([1, 0, 0, 0, 396, 0])
-    S4 = np.array([1, 0, 0, 0, 609, 0])
-    S5 = np.array([0, 0, 1, 0, -110, 0])
-    S6 = np.array([1, 0, 0, 0, 692, 0])
-    
-    exp1 = matrix_exp(S1, q_list[0])
-    exp2 = matrix_exp(S2, q_list[1])
-    exp3 = matrix_exp(S3, q_list[2])
-    exp4 = matrix_exp(S4, q_list[3])
-    exp5 = matrix_exp(S5, q_list[4])
-    exp6 = matrix_exp(S6, q_list[5])
-    
-    T = exp1 @ exp2 @ exp3 @ exp4 @ exp5 @ exp6 @ M
-    
+    T=np.eye(4)
+    for i, _ in enumerate(V):
+        T=T@matrix_exp(OMEGA[i], V[i], q_list[i])
+    T=T@M
     return T
+
+def model_link_lengths():
+    p=POSITIONS
+    xz=[0, 2]
+    return {
+        "base_to_shoulder_lift": float(p[1, 2]),
+        "upper_arm": float(np.linalg.norm(p[2, xz] - p[1, xz])),
+        "forearm": float(np.linalg.norm(p[3, xz] - p[2, xz])),
+        "wrist_to_tcp": float(np.linalg.norm(M[[0, 2], 3] - p[3, xz])),
+    }
 
 if __name__=="__main__":
     np.set_printoptions(precision=4, suppress=True)
-    print("Screw Axes:")
-    print("M")
-    print("T_0E")
-    print("Links Lengths [m]:")
+    print_matrix(OMEGA.T, name="Screw Axes")
+    print_matrix(POSITIONS.T, name="Positions")
+    print_matrix(V.T, name="Velocities")
+    print_matrix(M, name="M")
+    print_matrix(SO_101_fk([0,0,0,0,0]), name="T_0E")
+    print_matrix(SO_101_fk([-np.pi/2, 0, 0, 0, 0]), name="Move to left")
+    print("Links Lengths [m]:", model_link_lengths())
     
