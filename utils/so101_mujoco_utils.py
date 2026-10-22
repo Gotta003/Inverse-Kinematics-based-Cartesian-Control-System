@@ -192,12 +192,7 @@ def mujoco_starting(path_xml):
     site_id = m.site("gripperframe").id
     return m, d, site_id
     
-def mujoco_tcp(mj, q, gripper=0.0):
-    m, d, site_id = mj
-    joint_limits={
-        m.joint(i).name: m.jnt_range[i].tolist() for i in range(m.njnt)
-    }
-    assert f"All Joint Limits: {joint_limits}"
+def mujoco_tcp(m, d, site_id, q, gripper=0.0):
     d.qpos[:N_JOINTS] = q
     d.qpos[N_JOINTS] = gripper
     mujoco.mj_forward(m, d)

@@ -37,7 +37,8 @@ def test_named_poses_match_mujoco(mj, name):
     q=np.array(POSES[name], dtype=float)
     T_ours=SO_101_fk(q)
     T_ours[:3, 3]/= 1000.0
-    T_ref=mujoco_tcp(mj, q)
+    m, d, site_id=mj
+    T_ref=mujoco_tcp(m, d, site_id, q)
     assert position_error(T_ours, T_ref)<POS_TOL
     assert rotation_error(T_ours[:3,:3], T_ref[:3,:3])<ROT_TOL
     
@@ -52,7 +53,8 @@ def test_rand_configs_match_mujoco(mj):
     pos_err, rot_err=[], []
     for q in random_configs():
         T_ours=SO_101_fk(q)
-        T_ref=mujoco_tcp(mj, q)
+        m, d, site_id=mj
+        T_ref=mujoco_tcp(m, d, site_id, q)
         T_ours[:3,3]/=1000
         pos_err.append(position_error(T_ours, T_ref))
         rot_err.append(rotation_error(T_ours, T_ref))

@@ -26,16 +26,26 @@ import mujoco
 import numpy as np
 from src.forward_kinematics import SO_101_fk
 from src.utils.constants import POSES
+from utils.so101_mujoco_utils import mujoco_starting
 
 SCENE_XML=REPO_ROOT/"model_files"/"scheme.xml"
 DATA_DIR=REPO_ROOT/"results"/"data"
 FIG_DIR=REPO_ROOT/"results"/"figures"
 
-def parse_args():
+def build_dataset(m, d, site_id, n_random, seed):
     return
+
+def parse_args():
+    parser=argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--n_random", type=int, default=500)
+    parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument("--view", action="store_true", help="Show poses in Mujoco viewer")
+    return parser.parse_args()
 
 def main():
     args=parse_args()
-
+    m, d, site_id=mujoco_starting(str(SCENE_XML))
+    rows=build_dataset(m, d, site_id, args.n_random, args.seed)
+    
 if __name__=="__main__":
     main()
