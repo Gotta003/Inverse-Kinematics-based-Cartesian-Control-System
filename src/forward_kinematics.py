@@ -2,6 +2,7 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import numpy as np
+from src.utils.constants import OMEGA, POSITIONS, V, M
 
 def print_matrix(m, name="Matrix", decimals=4, width=11):
     m=np.atleast_2d(np.squeeze(np.array(m, dtype=float)))
@@ -11,49 +12,7 @@ def print_matrix(m, name="Matrix", decimals=4, width=11):
     print(name.center(total))
     print("="*total)
     for row in m:
-        print("".join(f"{x:>{width}.{decimals}f}" for x in row))
-
-
-
-OMEGA=np.array([
-    [0, 0, -1],
-    [0, 1, 0],
-    [0, 1, 0],
-    [0, 1, 0],
-    [-1, 0, 0],
-])
-
-POSITIONS=np.array([
-    [38.8353, 0, 0],
-    [69.2345, -18.2778, 116.6],
-    [97.2345, -18.2778, 229.1700],
-    [232.1345, -0.1778, 234.37],
-    [293.2345, -0.1778, 234.37],
-])
-
-def vectorial_product(A, B):
-    results=[]
-    for i, _ in enumerate(A):
-        prod=[]
-        prod.append(A[i][1]*B[i][2]-A[i][2]*B[i][1])
-        prod.append(A[i][2]*B[i][0]-A[i][0]*B[i][2])
-        prod.append(A[i][0]*B[i][1]-A[i][1]*B[i][0])
-        results.append(prod)
-    return np.array(results)        
-
-V=vectorial_product(POSITIONS, OMEGA)
-
-theta_cal=2.789
-def deg_to_rad(theta):
-    return theta_cal*np.pi/180
-theta_cal=deg_to_rad(theta_cal)
-
-M=np.array([
-    [1, 0, 0, 391.3619],
-    [0, np.cos(theta_cal), -np.sin(theta_cal), -0.0113],
-    [0, np.sin(theta_cal), np.cos(theta_cal), 226.4687],
-    [0,0,0,1]
-])
+        print("".join(f"{x:>{width}.{decimals}f}" for x in row))  
 
 def vec_to_matrix(V):
     return np.array([

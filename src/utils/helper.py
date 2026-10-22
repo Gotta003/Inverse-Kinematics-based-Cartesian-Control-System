@@ -1,0 +1,21 @@
+import numpy as np
+
+def vectorial_product(A, B):
+    results=[]
+    for i, _ in enumerate(A):
+        prod=[]
+        prod.append(A[i][1]*B[i][2]-A[i][2]*B[i][1])
+        prod.append(A[i][2]*B[i][0]-A[i][0]*B[i][2])
+        prod.append(A[i][0]*B[i][1]-A[i][1]*B[i][0])
+        results.append(prod)
+    return np.array(results)      
+
+def deg_to_rad(theta_cal):
+    return theta_cal*np.pi/180
+
+def derive_limits(m, njts):
+    limits={
+        m.joint(i).name: m.jnt_range[i].tolist() 
+        for i in range(njts)
+    }
+    return limits

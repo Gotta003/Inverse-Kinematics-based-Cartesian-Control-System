@@ -9,30 +9,12 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import pytest
 import numpy as np
-from src.forward_kinematics import SO_101_fk, print_matrix
+from src.forward_kinematics import SO_101_fk
+from src.utils.helper import derive_limits
+from src.utils.constants import N_JOINTS,  POSES, RND_SEED, N_RANDOMS, POS_TOL, ROT_TOL
 import mujoco
 import mujoco.viewer
  #from utils.so101_mujoco_utils import mujoco_tcp
-
-POS_TOL=1e-5
-ROT_TOL=1e-5
-N_JOINTS=5
-RND_SEED=0
-N_RANDOMS=200
-
-JOINT_LIMITS={}
-
-POSES={
-    "zero": [0, 0, 0, 0, 0],
-    "pan_plus": [1.0, 0, 0, 0, 0],
-    "pan_minus": [-1.0, 0, 0, 0, 0],
-    "lift_forward": [0, 0.8, 0, 0, 0],
-    "elbow_up": [0, 0, -1.0, 0, 0],
-    "wrist_down": [0, 0, 0, 1.2, 0],
-    "roll": [0, 0, 0, 0, 1.5],
-    "folded": [0, -1.5, -1.5, 1.0, 0],
-    "mixed": [0.5, 0.4, -0.6, 0.9, -1.0],
-}
 
 REPO_ROOT=Path(__file__).resolve().parent.parent
 SCENE_XML=REPO_ROOT/"model_files"/"scene.xml"
@@ -65,14 +47,7 @@ def mj():
     d = mujoco.MjData(m)
     site_id = m.site("gripperframe").id
     global JOINT_LIMITS
-    JOINT_LIMITS = {
-        m.joint(i).name: m.jnt_range[i].tolist() 
-        for i in range(N_JOINTS)
-    }
-    print("\n--- All Joint Limits ---")
-    for name, limits in JOINT_LIMITS.items():
-        print(f"  {name}: {limits}")
-    print("------------------------\n")
+    JOINT_LIMITS=derive_limits(m, N_JOINTS)
     return m, d, site_id
 
 @pytest.mark.parametrize("name", POSES)

@@ -5,10 +5,17 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   update-branches:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Auto-update open PRs
         uses: admiralaw/auto-update-pr-action@v1
         with:

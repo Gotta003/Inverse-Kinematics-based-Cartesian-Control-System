@@ -13,8 +13,22 @@ Run:
 """
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+REPO_ROOT=Path(__file__).resolve().parent.parent)
+sys.path.insert(0, str(REPO_ROOT))
 import argparse
+import csv
+import time
+
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import mujoco
+import numpy as np
+from src.forward_kinematics import SO_101_fk
+
+SCENE_XML=REPO_ROOT/"model_files"/"scheme.xml"
+DATA_DIR=REPO_ROOT/"results"/"data"
+FIG_DIR=REPO_ROOT/"results"/"figures"
 
 def parse_args():
     return
