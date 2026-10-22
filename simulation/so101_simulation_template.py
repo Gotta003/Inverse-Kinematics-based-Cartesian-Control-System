@@ -1,6 +1,15 @@
+"""
+Forward-Kinematics against Mujoco
+
+
+"""
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 import mujoco
 import mujoco.viewer
-from so101_mujoco_utils import set_initial_pose, move_sim, hold_sim
+from utils.so101_mujoco_utils import set_initial_pose, move_sim, hold_sim
 
 # ========== INITIALIZATION ===========
 m = mujoco.MjModel.from_xml_path('model_files/scene.xml')

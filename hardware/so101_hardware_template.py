@@ -1,4 +1,7 @@
-from so101_utils import load_calibration, setup_motors, move, hold
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from utils.so101_utils import load_calibration, setup_motors, move, hold
 
 # ========== INITIALIZATION ===========
 PORT_ID = "<your_port_id>"          # USB port you are using
