@@ -1,8 +1,10 @@
 import time
+
 import mujoco
 import numpy as np
 
-N_JOINTS=5
+N_JOINTS = 5
+
 
 def convert_to_dictionary(qpos):
     """
@@ -18,13 +20,14 @@ def convert_to_dictionary(qpos):
         A joint angle dictionary. (See SO-101 Robot Arm Setup Section 5.3)
     """
     return {
-        'shoulder_pan': qpos[0],
-        'shoulder_lift': qpos[1],
-        'elbow_flex': qpos[2],
-        'wrist_flex': qpos[3],
-        'wrist_roll': qpos[4],
-        'gripper': qpos[5] * 100.0 / 3.14159   # Converts to 0-100 range
+        "shoulder_pan": qpos[0],
+        "shoulder_lift": qpos[1],
+        "elbow_flex": qpos[2],
+        "wrist_flex": qpos[3],
+        "wrist_roll": qpos[4],
+        "gripper": qpos[5] * 100.0 / 3.14159,  # Converts to 0-100 range
     }
+
 
 def convert_to_list(dictionary):
     """
@@ -40,13 +43,14 @@ def convert_to_list(dictionary):
         Joint angle list
     """
     return [
-        dictionary['shoulder_pan'],
-        dictionary['shoulder_lift'],
-        dictionary['elbow_flex'],
-        dictionary['wrist_flex'],
-        dictionary['wrist_roll'],
-        dictionary['gripper']*3.14159/100.0     # Converts to radians for MuJoCo
+        dictionary["shoulder_pan"],
+        dictionary["shoulder_lift"],
+        dictionary["elbow_flex"],
+        dictionary["wrist_flex"],
+        dictionary["wrist_roll"],
+        dictionary["gripper"] * 3.14159 / 100.0,  # Converts to radians for MuJoCo
     ]
+
 
 def set_initial_pose(d, position_dict):
     """
@@ -69,6 +73,7 @@ def set_initial_pose(d, position_dict):
     pos = convert_to_list(position_dict)
     d.qpos[:] = pos
 
+
 def send_position_command(d, position_dict):
     """
     Sends a joint-space position command to the simulated actuators.
@@ -88,6 +93,7 @@ def send_position_command(d, position_dict):
     """
     pos = convert_to_list(position_dict)
     d.ctrl[:] = pos
+
 
 def move_sim(m, d, viewer, desired_position, duration):
     """
@@ -148,6 +154,7 @@ def move_sim(m, d, viewer, desired_position, duration):
         if time_until_next_step > 0:
             time.sleep(time_until_next_step)
 
+
 def hold_sim(m, d, viewer, duration):
     """
     Holds the simulated arm in place for duration seconds, MuJoCo
@@ -185,13 +192,15 @@ def hold_sim(m, d, viewer, duration):
         time_until_next_step = m.opt.timestep - (time.time() - step_start)
         if time_until_next_step > 0:
             time.sleep(time_until_next_step)
-            
+
+
 def mujoco_starting(path_xml):
     m = mujoco.MjModel.from_xml_path(path_xml)
     d = mujoco.MjData(m)
     site_id = m.site("gripperframe").id
     return m, d, site_id
-    
+
+
 def mujoco_tcp(m, d, site_id, q, gripper=0.0):
     d.qpos[:N_JOINTS] = q
     d.qpos[N_JOINTS] = gripper

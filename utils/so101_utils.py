@@ -1,8 +1,10 @@
+import time
+from pathlib import Path
+
+import draccus
 from lerobot.motors import Motor, MotorCalibration, MotorNormMode
 from lerobot.motors.feetech import FeetechMotorsBus, OperatingMode
-from pathlib import Path
-import draccus
-import time
+
 
 def load_calibration(ROBOT_NAME):
     """
@@ -19,10 +21,11 @@ def load_calibration(ROBOT_NAME):
     Raises:
         FileNotFoundError: If no calibration file exists for ROBOT_NAME.
     """
-    fpath = Path(f'calibration_files/{ROBOT_NAME}.json')
+    fpath = Path(f"calibration_files/{ROBOT_NAME}.json")
     with open(fpath) as f, draccus.config_type("json"):
         calibration = draccus.load(dict[str, MotorCalibration], f)
         return calibration
+
 
 def setup_motors(calibration, PORT_ID):
     """
@@ -41,30 +44,33 @@ def setup_motors(calibration, PORT_ID):
         read/write calls. Torque is re-enabled on exiting the
         torque_disabled() context.
     """
-    norm_mode_body = MotorNormMode.RADIANS      # <-- Can be changed according to preference,
-                                                # DEGREES/RADIANS, default RADIANS
+    norm_mode_body = (
+        MotorNormMode.RADIANS
+    )  # <-- Can be changed according to preference,
+    # DEGREES/RADIANS, default RADIANS
     bus = FeetechMotorsBus(
-                port=PORT_ID,
-                motors={
-                    "shoulder_pan": Motor(1, "sts3215", norm_mode_body),
-                    "shoulder_lift": Motor(2, "sts3215", norm_mode_body),
-                    "elbow_flex": Motor(3, "sts3215", norm_mode_body),
-                    "wrist_flex": Motor(4, "sts3215", norm_mode_body),
-                    "wrist_roll": Motor(5, "sts3215", norm_mode_body),
-                    "gripper": Motor(6, "sts3215", MotorNormMode.RANGE_0_100),
-                },
-                calibration=calibration,
-            )
+        port=PORT_ID,
+        motors={
+            "shoulder_pan": Motor(1, "sts3215", norm_mode_body),
+            "shoulder_lift": Motor(2, "sts3215", norm_mode_body),
+            "elbow_flex": Motor(3, "sts3215", norm_mode_body),
+            "wrist_flex": Motor(4, "sts3215", norm_mode_body),
+            "wrist_roll": Motor(5, "sts3215", norm_mode_body),
+            "gripper": Motor(6, "sts3215", MotorNormMode.RANGE_0_100),
+        },
+        calibration=calibration,
+    )
     bus.connect(True)
 
     with bus.torque_disabled():
         bus.configure_motors()
         for motor in bus.motors:
             bus.write("Operating_Mode", motor, OperatingMode.POSITION.value)
-            bus.write("P_Coefficient", motor, 32)   # Default 32
-            bus.write("I_Coefficient", motor, 0)    # Default 0
-            bus.write("D_Coefficient", motor, 32)   # Default 32
+            bus.write("P_Coefficient", motor, 32)  # Default 32
+            bus.write("I_Coefficient", motor, 0)  # Default 0
+            bus.write("D_Coefficient", motor, 32)  # Default 32
     return bus
+
 
 def move(bus, desired_position, duration):
     """
@@ -76,15 +82,15 @@ def move(bus, desired_position, duration):
 
     Args:
         bus: Connected motor bus.
-        desired_position: Goal joint configuration as a joint angle dictionary 
+        desired_position: Goal joint configuration as a joint angle dictionary
             (See SO-101 Robot Arm Setup Section 5.3).
         duration: Duration of the movement in seconds. Must be >= 0.
 
     Returns:
         None.
     """
-    f_loop = 50     # Interpolation loop frequency in Hz.
-                    # Use between 50-100, bus can't handle much higher
+    f_loop = 50  # Interpolation loop frequency in Hz.
+    # Use between 50-100, bus can't handle much higher
 
     if duration <= 0:
         bus.sync_write("Goal_Position", desired_position, normalize=True)
@@ -111,8 +117,9 @@ def move(bus, desired_position, duration):
         # Send command
         bus.sync_write("Goal_Position", position_dict, normalize=True)
 
-        time.sleep(1/f_loop)
-    
+        time.sleep(1 / f_loop)
+
+
 def hold(duration):
     """
     Holds the arm in place for duration seconds.
