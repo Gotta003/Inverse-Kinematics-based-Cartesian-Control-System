@@ -7,6 +7,7 @@ Menu
 5) Check robot connection   bus type + joint readings in radians
 6) Detect the port again
 7) Change robot (calibration file)
+8) Extract PoE and calibration data
 q) Quit
 """
 import glob
@@ -228,6 +229,7 @@ def main():
         "Check robot connection",
         "Detect the port again",
         "Change robot (calibration file)",
+        "Extract PoE",
         "Quit",
     ]
     while True:
@@ -277,6 +279,8 @@ def main():
             get_port(cfg, force_detect=True)
         elif choice=="Change robot (calibration file)":
             choose_robot(cfg)
+        elif choice=="Extract PoE":
+            run([PYTHON]+["tools/extract_poe_params.py"])
 
     print("Quitting...")
 if __name__=="__main__":

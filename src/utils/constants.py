@@ -20,37 +20,27 @@ N_JOINTS=len(JOINT_NAMES)
 # FORWARD KINEMATICS
 # ------------------------------------
 
-theta_cal=np.arctan2(0.048660291, 0.998815386)
-#theta_cal = 2.789
-#theta_cal = deg_to_rad(theta_cal)
-M = np.array(
-    [
-        [1, 0, 0, 0.3913619],
-        [0, np.cos(theta_cal), -np.sin(theta_cal), -0.0000113],
-        [0, np.sin(theta_cal), np.cos(theta_cal), 0.2264687],
-        [0, 0, 0, 1],
-    ]
-)
-
-OMEGA = np.array(
-    [
-        [0, 0, -1],
-        [0, 1, 0],
-        [0, 1, 0],
-        [0, 1, 0],
-        [-1, 0, 0],
-    ]
-)
-
-POSITIONS = np.array(
-    [
-        [0.0388353, 0, 0],
-        [0.0692345, -0.0182778, 0.1166],
-        [0.0972345, -0.0182778, 0.2291700],
-        [0.2321345, -0.0001778, 0.23437],
-        [0.2932345, -0.0001778, 0.23437],
-    ]
-)
+theta_cal = np.arctan2(0.048660291, 0.998815386)
+M = np.array([
+    [1, 0, 0, 0.3913619],
+    [0, np.cos(theta_cal), -np.sin(theta_cal), -0.0000113],
+    [0, np.sin(theta_cal), np.cos(theta_cal), 0.2264687],
+    [0, 0, 0, 1],
+])
+OMEGA = np.array([
+    [0, 0, -1],   # shoulder_pan
+    [0, 1, 0],   # shoulder_lift
+    [0, 1, 0],   # elbow_flex
+    [0, 1, 0],   # wrist_flex
+    [-1, 0, 0],   # wrist_roll
+])
+POSITIONS = np.array([
+    [0.0388353, -0.0000000, 0.0624000],   # shoulder_pan
+    [0.0692345, -0.0182778, 0.1166000],   # shoulder_lift
+    [0.0972345, -0.0182778, 0.2291700],   # elbow_flex
+    [0.2321345, -0.0182778, 0.2343700],   # wrist_flex
+    [0.2932345, -0.0001778, 0.2343700],   # wrist_roll
+])
 
 V = vectorial_product(POSITIONS, OMEGA)
 
