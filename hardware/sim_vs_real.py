@@ -299,6 +299,12 @@ def compare(sim_log, real_log, live):
     t_map=real_to_sim_time(real_log)
     sim_at_r={j: np.interp(t_map, ts_s, sim_q[j]) for j in ALL_JOINT_NAMES}
     
+    seg_len=MOVE_TIME+SETTLE_TIME
+    n_seg=int(t_map.max()//seg_len)+1
+    core=t_map<(n_seg-1)*seg_len
+    if not core.any():
+        core=np.ones_like(t_map, dtype=bool)
+    
     def tcp(qd, k):
         return SO_101_fk(np.array([qd[j][k] for j in JOINT_NAMES]))[:3, 3]
     
@@ -357,6 +363,8 @@ def compare(sim_log, real_log, live):
         ax.legend(fontsize=8)
     axes[2].plot(ts_r, err_sim, label="real vs MuJoCo")
     axes[2].plot(ts_r, err_cmd, label="real vs commanded")
+    if (~core).any():
+        axes[2].axvspan(ts_r[~core][0], ts_r[-1], color="0.85", zorder=0, label="return to rest (excluded)")
     axes[2].set(xlabel="t [s]", ylabel="TCP error [mm]", title="Cartesian error (via FK)")
     axes[2].grid(alpha=0.3)
     axes[2].legend(fontsize=8)
