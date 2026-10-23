@@ -1,6 +1,5 @@
 import numpy as np
 
-
 def vectorial_product(A, B):
     results = []
     for i, _ in enumerate(A):
@@ -26,3 +25,6 @@ def deg_to_rad(theta_cal):
 def derive_limits(m, njts):
     limits = {m.joint(i).name: m.jnt_range[i].tolist() for i in range(njts)}
     return limits
+
+def interp(A, B, s, joints_list):
+    return {j: (1-s)*A[j]+s*B[j] for j in joints_list}

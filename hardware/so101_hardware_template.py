@@ -5,8 +5,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from utils.so101_utils import hold, load_calibration, move, setup_motors
 
 # ========== INITIALIZATION ===========
-PORT_ID = "<your_port_id>"  # USB port you are using
-ROBOT_NAME = "<your_robots_name>"  # ID you assigned for the robot
+PORT_ID = "/dev/ttyACM0"  # USB port you are using
+ROBOT_NAME = "jarvis"  # ID you assigned for the robot
 
 calibration = load_calibration(ROBOT_NAME)
 bus = setup_motors(calibration, PORT_ID)
@@ -24,3 +24,4 @@ P1 = {
 # ============ TRAJECTORY =============
 move(bus, P1, 2.0)
 hold(3.0)
+bus.disable_torque()

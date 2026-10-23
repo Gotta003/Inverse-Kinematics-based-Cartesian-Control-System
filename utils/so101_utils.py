@@ -1,9 +1,12 @@
+import math
 import time
 from pathlib import Path
 
 import draccus
 from lerobot.motors import Motor, MotorCalibration, MotorNormMode
 from lerobot.motors.feetech import FeetechMotorsBus, OperatingMode
+
+from src.utils.constants import LOOP_HZ
 
 
 def load_calibration(ROBOT_NAME):
@@ -26,6 +29,42 @@ def load_calibration(ROBOT_NAME):
         calibration = draccus.load(dict[str, MotorCalibration], f)
         return calibration
 
+_POSITION_REGISTERS=("Present_Position", "Goal_Position")
+_ARM_JOINTS=("shoulder_pan", "shoulder_lift", "elbow_flex", "wrist_flex", "wrist_roll")
+
+class RadianBus:
+    def __init__(self, bus):
+        self._bus=bus
+    
+    def __getattr__(self, name):
+        return getattr(self._bus, name)
+    
+    @staticmethod
+    def _convert(data_name, values, factor, normalize):
+        if not normalize or data_name not in _POSITION_REGISTERS or not isinstance(values, dict):
+            return values
+        return {
+            j: (v * factor if j in _ARM_JOINTS else v) for j,v in values.items()
+        }
+        
+    def sync_read(self, data_name, motors=None, *args, normalize=True, **kwargs):
+        values=self._bus.sync_read(data_name, motors, *args, normalize=normalize, **kwargs)
+        return self._convert(data_name, values, math.pi/180.0, normalize)
+    
+    def sync_write(self, data_name, values, *args, normalize=True, **kwargs):
+        values=self._convert(data_name, values, 180.0/math.pi, normalize)
+        return self._bus.sync_write(data_name, values, *args, normalize=normalize, **kwargs)
+    
+    def read(self, data_name, motor, *args, normalize=True, **kwargs):
+        value=self._bus.read(data_name, motor, *args, normalize=normalize, **kwargs)
+        if normalize and data_name in _POSITION_REGISTERS and motor in _ARM_JOINTS:
+            value=value*math.pi/180.0
+        return value
+    
+    def write(self, data_name, motor, value, *args, normalize=True, **kwargs):
+        if normalize and data_name in _POSITION_REGISTERS and motor in _ARM_JOINTS:
+            value=value*180.0/math.pi
+        return self._bus.write(data_name, motor, value, *args, normalize=normalize, **kwargs)
 
 def setup_motors(calibration, PORT_ID):
     """
@@ -44,10 +83,8 @@ def setup_motors(calibration, PORT_ID):
         read/write calls. Torque is re-enabled on exiting the
         torque_disabled() context.
     """
-    norm_mode_body = (
-        MotorNormMode.RADIANS
-    )  # <-- Can be changed according to preference,
-    # DEGREES/RADIANS, default RADIANS
+    has_radians=hasattr(MotorNormMode, "RADIANS")
+    norm_mode_body=MotorNormMode.RADIANS if has_radians else MotorNormMode.DEGREES
     bus = FeetechMotorsBus(
         port=PORT_ID,
         motors={
@@ -69,7 +106,7 @@ def setup_motors(calibration, PORT_ID):
             bus.write("P_Coefficient", motor, 32)  # Default 32
             bus.write("I_Coefficient", motor, 0)  # Default 0
             bus.write("D_Coefficient", motor, 32)  # Default 32
-    return bus
+    return bus if has_radians else RadianBus(bus)
 
 
 def move(bus, desired_position, duration):
@@ -89,7 +126,7 @@ def move(bus, desired_position, duration):
     Returns:
         None.
     """
-    f_loop = 50  # Interpolation loop frequency in Hz.
+    f_loop = LOOP_HZ  # Interpolation loop frequency in Hz.
     # Use between 50-100, bus can't handle much higher
 
     if duration <= 0:
@@ -113,11 +150,11 @@ def move(bus, desired_position, duration):
             p0 = starting_pose[joint]
             pf = desired_position[joint]
             position_dict[joint] = (1 - s) * p0 + s * pf
-
-        # Send command
+        # Send Command
         bus.sync_write("Goal_Position", position_dict, normalize=True)
-
         time.sleep(1 / f_loop)
+    # Send Command
+    bus.sync_write("Goal_Position", desired_position, normalize=True)
 
 
 def hold(duration):

@@ -36,3 +36,4 @@ P1 = {
 with mujoco.viewer.launch_passive(m, d) as viewer:
     move_sim(m, d, viewer, P1, 2.0)
     hold_sim(m, d, viewer, 3.0)
+    move_sim(m, d, viewer, starting_position, 2.0)
