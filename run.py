@@ -230,6 +230,7 @@ def main():
         "Detect the port again",
         "Change robot (calibration file)",
         "Extract PoE",
+        "Render DH frames figure",
         "Quit",
     ]
     while True:
@@ -281,6 +282,19 @@ def main():
             choose_robot(cfg)
         elif choice=="Extract PoE":
             run([PYTHON]+["tools/extract_poe_params.py"])
+        elif choice=="Render DH frames figure":
+            view=menu("View", ["3/4 perspective", "side (othographic)", "both"])
+            if view is None:
+                continue
+            q=input("Joint angles q1-q5 in radians, space separated (Enter=home pose): ").split()
+            if q and len(q)!=5:
+                err("Give 5 values or press Etner for home pose")
+                continue
+            extra=["--q"]+q if q else []
+            views=[[], ["--side"]] if view==2 else [[] if view==0 else ["--side"]]
+            for v in views:
+                run([PYTHON, "tools/render_dh_figure.py"]+v+extra)
+            info("Figures saved in results/figures/ (dh_frames_render*.png and .pdf)")
 
     print("Quitting...")
 if __name__=="__main__":
