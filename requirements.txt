@@ -5,3 +5,5 @@ mujoco>=3.1.0
 lerobot
 pytest>=8.0.0
 ipykernel
+pyserial
+draccus

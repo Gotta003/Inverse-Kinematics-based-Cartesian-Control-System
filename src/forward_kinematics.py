@@ -4,7 +4,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import numpy as np
 
-from src.utils.constants import OMEGA, POSITIONS, M, V
+from src.utils.constants import OMEGA, POSITIONS, M, V, N_JOINTS
 
 
 def print_matrix(m, name="Matrix", decimals=4, width=11):
@@ -47,7 +47,7 @@ def matrix_exp(omega, v, theta):
 
 
 def SO_101_fk(q_list):
-    if len(np.asarray(q_list).flatten()) != 5:
+    if len(np.asarray(q_list).flatten()) != N_JOINTS:
         raise ValueError("Shape of the position array is wrong")
     T = np.eye(4)
     for i, _ in enumerate(V):
