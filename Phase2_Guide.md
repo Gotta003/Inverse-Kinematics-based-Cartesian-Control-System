@@ -24,21 +24,21 @@ Then, the heading is not free, once the TCP position is fixed, only pitch and ro
     - 1 constraint for  an orientation consistent with the arm
 
 ## Files
-| Path | Content | Status |
-|---|---|---|
-| `src/forward_kinematics.py` | FK with the PoE | from Phase 1 |
-| `src/jacobian.py` | space and TCP Jacobian, conditioning metrics | new |
-| `src/inverse_kinematics.py` | IK solver, task modes, seeding, result type | new |
-| `src/utils/helper.py` | add SO(3)/SE(3) helpers and the damped pseudoinverse | extended |
-| `src/utils/constants.py` | add a Jacobian block and an IK block | extended |
-| `src/utils/limits.py` | joint limits from the MuJoCo XML and the calibration file | new |
-| `src/utils/sim_checks.py` | MuJoCo contact checks at a configuration and along a joint path | new |
-| `tests/test_jacobian.py` | Jacobian checks | new |
-| `tests/test_ik.py` | named Cartesian targets and IK property tests | new |
-| `simulation/ik_validation.py` | large-scale validation, CSVs, figures, viewer | new |
-| `hardware/ik_hardware.py` | safe IK test on the real arm, with dry run | new |
-| `run.py`, `run.sh` | menu launcher and environment wrapper | extended |
-| `results/data/`, `results/figures/` | outputs of the scripts | generated |
+| Path | Content | Status | Role |
+|---|---|---|---|
+| `src/forward_kinematics.py` | FK with the PoE | from Phase 1 |  DONE |
+| `src/jacobian.py` | space and TCP Jacobian, conditioning metrics | new | Matteo |
+| `src/inverse_kinematics.py` | IK solver, task modes, seeding, result type | new | Flavio |
+| `src/utils/helper.py` | add SO(3)/SE(3) helpers and the damped pseudoinverse | extended | Both |
+| `src/utils/constants.py` | add a Jacobian block and an IK block | extended | Both |
+| `src/utils/limits.py` | joint limits from the MuJoCo XML and the calibration file | new | Matteo |
+| `src/utils/sim_checks.py` | MuJoCo contact checks at a configuration and along a joint path | new | Matteo |
+| `tests/test_jacobian.py` | Jacobian checks | new | Flavio |
+| `tests/test_ik.py` | named Cartesian targets and IK property tests | new | Matteo |
+| `simulation/ik_validation.py` | large-scale validation, CSVs, figures, viewer | new | Matteo |
+| `hardware/ik_hardware.py` | safe IK test on the real arm, with dry run | new | Flavio |
+| `run.py`, `run.sh` | menu launcher and environment wrapper | extended |  |
+| `results/data/`, `results/figures/` | outputs of the scripts | generated | Both |
 
 ## `src/jacobian.py` and `tests/test_jacobian.py`
 - [ ] Space Jacobian from screw axes implementing a `space_jacobian(q)` that accumulates the PoE and applies the $6\times6$ adjoint, reusing constants in `src/utils/constants.py`
