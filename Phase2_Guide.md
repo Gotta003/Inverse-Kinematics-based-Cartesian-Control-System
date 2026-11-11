@@ -27,7 +27,7 @@ Then, the heading is not free, once the TCP position is fixed, only pitch and ro
 | Path | Content | Status | Role |
 |---|---|---|---|
 | `src/forward_kinematics.py` | FK with the PoE | from Phase 1 |  DONE |
-| `src/jacobian.py` | space and TCP Jacobian, conditioning metrics | new | Matteo |
+| `src/jacobian.py` | space and TCP Jacobian, conditioning metrics | new | FONR |
 | `src/inverse_kinematics.py` | IK solver, task modes, seeding, result type | new | Flavio |
 | `src/utils/helper.py` | add SO(3)/SE(3) helpers and the damped pseudoinverse | extended | Both |
 | `src/utils/constants.py` | add a Jacobian block and an IK block | extended | Both |
@@ -41,10 +41,10 @@ Then, the heading is not free, once the TCP position is fixed, only pitch and ro
 | `results/data/`, `results/figures/` | outputs of the scripts | generated | Both |
 
 ## `src/jacobian.py` and `tests/test_jacobian.py`
-- [ ] Space Jacobian from screw axes implementing a `space_jacobian(q)` that accumulates the PoE and applies the $6\times6$ adjoint, reusing constants in `src/utils/constants.py`
-- [ ] TCP Jacobian implementation so a function `tcp_jacobian(q)` that outputs J_$\omega$ and J_p. It is done since MuJoCo has a function called `mj_jacSite` returns TCP Jacobian, so to test is required
-- [ ] Conditioning metrics computation in a function `jacobian_metrics(J), returning singular values, smallest singular value $\sigma$_min, manipulability and condition number
-- [ ] Do a `__main__` to test q=0 (output equal to screw axes) amd TCP Jacobian at q=0 with its singular values
+- [x] Space Jacobian from screw axes implementing a `space_jacobian(q)` that accumulates the PoE and applies the $6\times6$ adjoint, reusing constants in `src/utils/constants.py`
+- [x] TCP Jacobian implementation so a function `tcp_jacobian(q)` that outputs J_$\omega$ and J_p. It is done since MuJoCo has a function called `mj_jacSite` returns TCP Jacobian, so to test is required
+- [x] Conditioning metrics computation in a function `jacobian_metrics(J), returning singular values, smallest singular value $\sigma$_min, manipulability and condition number
+- [x] Do a `__main__` to test q=0 (output equal to screw axes) amd TCP Jacobian at q=0 with its singular values
 - [ ] In `tests/test_jacobian.py` we need to run 3 independent tests:
     - [ ] Structure of J_s(0) equals screw axes
     - [ ] Check output differences with FK (like vee check)
