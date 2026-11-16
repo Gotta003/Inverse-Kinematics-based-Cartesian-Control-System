@@ -74,3 +74,6 @@ def damped_pseudo_inverse(J, eps=0.0, lam_max=0.0, rank=None, condition=1e-10):
     Vr=Vt[keep].T
     N=np.eye(J.shape[1])-Vr@Vr.T
     return (Vt.T*gain)@U.T, sigma, float(np.sqrt(lam2)), N
+
+def vee_so3(W):
+    return np.array([W[2, 1], W[0, 2], W[1, 0]])

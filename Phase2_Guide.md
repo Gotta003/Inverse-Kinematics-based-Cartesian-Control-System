@@ -92,19 +92,19 @@ Then, the heading is not free, once the TCP position is fixed, only pitch and ro
 - [ ] Add `__main__` to perform a check
 
 ## `tests/test_ik.py`
-- [ ] Define targets (reachable, unreachable and non-converging)
-- [ ] Solve and check each target independently with a fixed seed to enable reproducibility
-- [ ] Report the table in `results/data/` with the result configuration format in `inverse_kinematics.py` to generate a table to insert in the report
-- [ ] Assertions for named targets for test
-- [ ] Checks on:
-    - [ ] Damped pseudoinverse
-    - [ ] Limits
-    - [ ] Warm-start round trip
-    - [ ] Cold-start round trip
-    - [ ] Priority vs Stacked
-    - [ ] Branch continuity
-    - [ ] Beyond joint limits
-    - [ ] Singularities
+- [x] Define targets (reachable, unreachable and non-converging)
+- [x] Solve and check each target independently with a fixed seed to enable reproducibility
+- [x] Report the table in `results/data/` with the result configuration format in `inverse_kinematics.py` to generate a table to insert in the report
+- [x] Assertions for named targets for test
+- [x] Checks on:
+    - [x] Damped pseudoinverse
+    - [x] Limits
+    - [x] Warm-start round trip
+    - [x] Cold-start round trip
+    - [x] Priority vs Stacked
+    - [x] Branch continuity
+    - [x] Beyond joint limits
+    - [x] Singularities
 
 ## `simulation/ik_validation.py`
 - [ ] Target sets in a box configuration everywhere inside the limits and a workspace only the ones collision free using `sim_checks.py`

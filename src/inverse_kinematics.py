@@ -31,7 +31,7 @@ class IKResult:
     ori_err: float
     iterations: int
     restarts: int
-    sigma_min: float
+    sigma: float
     time_s: float=0.0
     history: list=field(default_factory=list)
 
@@ -105,7 +105,7 @@ def inverse_kinematics(p_dest, q0=None, mode="position", pitch=None, R_dest=None
         if ok:
             break
     ok, _, q, status, pos, ori, i, hist=best
-    sigma=float(np.linalg.svd(tcp_jacobian(q)[3:], compute_uv=False)[-1])
+    sigma=float(np.linalg.svd(tcp_jacobian(q), compute_uv=False)[-1])
     return IKResult(q, ok, status, pos, ori, total_iterations, i, sigma, time.perf_counter()-t0, hist)
 
 def ik_position(p_dest, q0=None, **kw):

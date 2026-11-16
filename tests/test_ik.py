@@ -16,7 +16,7 @@ import pytest
 from src.forward_kinematics import SO_101_fk
 from src.inverse_kinematics import MODES, METHODS, PAN_AXIS_XY, ik_position, inverse_kinematics, pitch_of
 from src.jacobian import position_jacobian, tcp_jacobian
-from src.utils.constants import IK_POS_TOL, IK_ROT_TOL, N_JOINTS, IK_MAX_JOINT_STEP
+from src.utils.constants import IK_POS_TOL, IK_ROT_TOL, N_JOINTS, IK_MAX_JOINT_STEP, RND_SEED
 from src.utils.limits import calibration_limits, inv_kin_limits, model_limits
 from utils.so101_mujoco_utils import mujoco_starting, mujoco_tcp
 from src.utils.helper import damped_pseudo_inverse, derive_limits, rotation_error
@@ -32,18 +32,14 @@ def mj():
     m, d, site_id=mujoco_starting(str(SCENE_XML))
     return m, d, site_id
 
-def targets(n=RANDOM_IK, seed=0):
-    rng=np.random.default_rng(seed)
-    return rng.uniform(LIMITS[:, 0], LIMITS[:, 1], size=(n, N_JOINTS))
-
 def test_damped_pseudoinverse_without_damping():
-    J=np.random.default_rng(0).normal(size=(3,5))
+    J=np.random.default_rng(RND_SEED).normal(size=(3,5))
     Jp, _, lam, _=damped_pseudo_inverse(J)
     assert lam==0.0
     assert np.allclose(Jp, np.linalg.pinv(J), atol=1e-12)
     
 def test_damped_pseudoinverse_bounded():
-    U, _, Vt=np.linalg.svd(np.random.default_rng(1).normal(size=(3,5)))
+    U, _, Vt=np.linalg.svd(np.random.default_rng(RND_SEED).normal(size=(3,5)))
     J=U@np.diag([0.3, 0.1, 1e-6])@Vt[:3]
     eps=0.02
     lam_max=0.02
@@ -63,9 +59,9 @@ def test_ik_limits_inside_model_and_calibration():
     model=model_limits()
     cal=calibration_limits("jarvis")
     assert np.all(lim[:,0]>np.maximum(model[:,0], cal[:,0]))
-    assert np.all(lim[:,1]<np.maximum(model[:,1], cal[:,1]))
+    assert np.all(lim[:,1]<np.minimum(model[:,1], cal[:,1]))
     
-def targets(n=RANDOM_IK, seed=0):
+def targets(n=RANDOM_IK, seed=RND_SEED):
     rng=np.random.default_rng(seed)
     return rng.uniform(LIMITS[:,0], LIMITS[:,1], size=(n, N_JOINTS))
     
@@ -101,7 +97,7 @@ def failure_class(q, res):
         
 @pytest.mark.parametrize("mode", MODES)
 def test_round_trip_warm_start(mj, mode):
-    rng=np.random.default_rng(2)
+    rng=np.random.default_rng(RND_SEED)
     ok=0
     unexplained=[]
     for q in targets():
@@ -119,7 +115,7 @@ def test_round_trip_warm_start(mj, mode):
 @pytest.mark.parametrize("mode", MODES)
 def test_round_trip_cold_start(mode):
     ok=0
-    for q in targets(seed=3):
+    for q in targets(seed=RND_SEED):
         T, res=solve(q, mode)
         assert np.all(res.q>=LIMITS[:, 0]) and np.all(res.q<=LIMITS[:, 1])
         if res.success:
@@ -133,16 +129,16 @@ def test_round_trip_cold_start(mode):
     
 @pytest.mark.parametrize("method", METHODS)
 def test_methods_converge_on_consistent_pose(method):
-    rng=np.random.default_rng(4)
-    for q in targets(20, seed=5):
+    rng=np.random.default_rng(RND_SEED)
+    for q in targets(20, seed=RND_SEED):
         q0=np.clip(q+rng.normal(0, 0.05, N_JOINTS), LIMITS[:, 0], LIMITS[:, 1])
         T, res=solve(q, "pose", q0=q0, restarts=0, method=method)
         assert res.success
         check_solution(T, res, "pose")
         
 def test_warm_start_stays_on_branch():
-    rng=np.random.default_rng(6)
-    for q in targets(30, seed=7):
+    rng=np.random.default_rng(RND_SEED)
+    for q in targets(30, seed=RND_SEED):
         if np.linalg.svd(tcp_jacobian(q), compute_uv=False)[-1]<0.05:
             continue
         q0=np.clip(q+rng.normal(0, 0.03, N_JOINTS), LIMITS[:, 0], LIMITS[:, 1])
