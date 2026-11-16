@@ -60,3 +60,17 @@ def adjoint(T):
     Ad[3:, :3]=skew(p)@R
     Ad[3:, 3:]=R
     return Ad
+
+def damped_pseudo_inverse(J, eps=0.0, lam_max=0.0, rank=None, condition=1e-10):
+    U, s, Vt=np.linalg.svd(J, full_matrices=False)
+    r=min(J.shape) if rank is None else rank
+    sigma=float(s[r-1]) if r>=1 else 0.0
+    lam2=lam_max**2*(1.0-(sigma/eps)**2) if (eps>0 and sigma<eps) else 0.0
+    keep=np.zeros_like(s, dtype=bool)
+    keep[:r]=True
+    keep&=s>condition*(s[0] if s.size else 0.0)
+    gain=np.zeros_like(s)
+    gain[keep]=s[keep]/(s[keep]**2+lam2)
+    Vr=Vt[keep].T
+    N=np.eye(J.shape[1])-Vr@Vr.T
+    return (Vt.T*gain)@U.T, sigma, float(np.sqrt(lam2)), N
