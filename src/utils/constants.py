@@ -78,3 +78,11 @@ POSES = {
     "compact": [0.0, -0.6, 0.9, 0.5, 0.0],
     "side_mixed": [0.4, 0.3, -0.3, 0.8, 0.5],
 }
+
+# ------------------------------------
+# INVERSE KINEMATICS
+# ------------------------------------
+IK_MAX_ITERATIONS=200
+IK_RESTARTS=15
+IK_W_ROT=0.1
+IK_STALL_ITERATIONS=20
