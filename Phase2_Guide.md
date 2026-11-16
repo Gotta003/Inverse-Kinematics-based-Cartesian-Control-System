@@ -27,11 +27,11 @@ Then, the heading is not free, once the TCP position is fixed, only pitch and ro
 | Path | Content | Status | Role |
 |---|---|---|---|
 | `src/forward_kinematics.py` | FK with the PoE | from Phase 1 |  DONE |
-| `src/jacobian.py` | space and TCP Jacobian, conditioning metrics | new | FONR |
+| `src/jacobian.py` | space and TCP Jacobian, conditioning metrics | new | Matteo |
 | `src/inverse_kinematics.py` | IK solver, task modes, seeding, result type | new | Flavio |
 | `src/utils/helper.py` | add SO(3)/SE(3) helpers and the damped pseudoinverse | extended | Both |
 | `src/utils/constants.py` | add a Jacobian block and an IK block | extended | Both |
-| `src/utils/limits.py` | joint limits from the MuJoCo XML and the calibration file | new | Matteo |
+| `src/utils/limits.py` | joint limits from the MuJoCo XML and the calibration file | new | DONE |
 | `src/utils/sim_checks.py` | MuJoCo contact checks at a configuration and along a joint path | new | Matteo |
 | `tests/test_jacobian.py` | Jacobian checks | new | Flavio |
 | `tests/test_ik.py` | named Cartesian targets and IK property tests | new | Matteo |
@@ -52,17 +52,17 @@ Then, the heading is not free, once the TCP position is fixed, only pitch and ro
 
 ## `src/utils/`
 - [ ] `helper.py` for math helpers and damped pseudoinverse
-    - [ ] Skew
+    - [x] Skew
     - [ ] Vee
-    - [ ] Adjoint
+    - [x] Adjoint
     - [ ] Inverse Homogeneous Transform
     - [ ] SO(3) logarithm
     - [ ] damped pseudoinverse, it should return the pseudoinverse, monitored singular value $\sigma$, the $\lambda$ used and null-space projector (this is to have an adaptive damping to stay away from singularities with step exact pseudoinverse, to preserve accuracy loss, SVD gives $\sigma$_min and allows truncating singular values that are zero by construction, can have a primary and a secondary task assigned)
 - [ ] `constants.py` add a Jacobian and IK block
-- [ ] `limits.py` for joint limits
-    - [ ] Read joint ranges directly from MuJoCo XML
-    - [ ] Convert calibrated range of the robot from its calibration file
-    - [ ] Intersection of the two ranges and shrink the result by safety margin
+- [x] `limits.py` for joint limits
+    - [x] Read joint ranges directly from MuJoCo XML
+    - [x] Convert calibrated range of the robot from its calibration file
+    - [x] Intersection of the two ranges and shrink the result by safety margin
 - [ ] `sim_checks.py` MuJoCo collision checks (mainly for checking for validation and hardware)
     - [ ] A function that returns the contacts at a configuration like floor or link to link
     - [ ] A function that samples a oint-space straight segment and returns new contacts and the lowest TCP height along it
