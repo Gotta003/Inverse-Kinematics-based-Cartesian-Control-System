@@ -96,7 +96,7 @@ def view_solutions(m, d, Q, seconds=2.0):
             if not res.success:
                 print(f"Target {k}: IK Failed ({res.status}), SKIPPED")
                 continue
-            move_sim(m, d, viewer, convert_to_dictionary(list(req.q)+[0.0]), seconds)
+            move_sim(m, d, viewer, convert_to_dictionary(list(res.q)+[0.0]), seconds)
             hold_sim(m, d, viewer, 0.5)
             p_sim=d.site_xpos[site_id].copy()
             print(f"Target {k}: p={np.round(p*1000, 1)} mm pitch {np.degrees(pitch):.1f} deg  IK {res.iterations} iters, simulated arm: TCP error {np.linalg.norm(p_sim-p)*1000:.2f} mm")
@@ -113,7 +113,7 @@ def facing(q, p):
 
 def in_workspace(m, d, q):
     p=SO_101_fk(q)[:3, 3]
-    return p[2]>=Z_MIN and radial(q)>=R_MIN and facing(q, p) and not contacts(m, d, q)
+    return p[2]>=Z_MIN and radial(p)>=R_MIN and facing(q, p) and not contacts(m, d, q)
 
 def sample_targets(m, d, lim, n, seed, workspace):
     rng=np.random.default_rng(seed)
@@ -162,7 +162,7 @@ def run_case(m, d, site_id, lim, q, mode, method, start, rng):
 
     pos_mj=np.linalg.norm(T_mj[:3, 3]-T[:3, 3])
     if mode=="pitch":
-        ori_mj=abs(pitch_of(T_mj[:3, 3]-T[:3, :3]))
+        ori_mj=abs(pitch_of(T_mj)-pitch_of(T))
     elif mode=="pose":
         ori_mj=rotation_angle(T_mj[:3, :3], T[:3, :3])
     else:
@@ -223,6 +223,7 @@ def summarize(rows):
         out.append({
             "set": s,
             "mode": mode,
+            "method": method,
             "start": start,
             "n": len(g),
             "success": len(ok),
@@ -241,6 +242,7 @@ def summarize(rows):
             "restarts_mean": np.mean([r["restarts"] for r in g]),
             **{f"fail_{c}": fails.get(c, 0) for c in FAIL_CLASSES}
         })
+    return out
 
 def singularity_sweep(lim, steps=400, before=0.10, beyond=0.01):
     q_s=np.array([0.0, 0.0, np.radians(-78.44), 0.0, 0.0])
@@ -285,16 +287,109 @@ def save_csv(data, path):
         w.writerows(data)
 
 def plot_errors(data, path):
-    pass
+    fig, axes=plt.subplots(1, 2, figsize=(11, 4.2))
+    for i, mode in enumerate(("position", "pitch", "pose")):
+        for start, ls in (("warm", "-"), ("cold", "--")):
+            v=np.sort([r["pos_err_m"] for r in data if r["set"]=="workspace" and r["mode"]==mode and r["method"]=="priority" and r["start"]==start and r["success"]])
+            if v.size:
+                axes[0].plot(np.maximum(v, FLOOR), np.arange(1, v.size+1)/v.size, ls, color=f"C{i}", label=f"{mode}, {start}")
+    for i, mode in enumerate(("pitch", "pose")):
+        for start, ls in (("warm", "-"), ("cold", "--")):
+            v=np.sort([r["ori_err_m"] for r in data if r["set"]=="workspace" and r["mode"]==mode and r["method"]=="priority" and r["start"]==start and r["success"]])
+            if v.size:
+                axes[1].plot(np.maximum(v, FLOOR), np.arange(1, v.size+1)/v.size, ls, color=f"C{i+1}", label=f"{mode}, {start}")
+    axes[0].set_xlabel("TCP position error in MuJoCo [m]")
+    axes[1].set_xlabel("orientation error in MuJoCo [rad] (pitch: |pitch-pitch_d|)")
+    fig.text(0.99, 0.01, f"errors < {FLOOR:.0e} drawn at {FLOOR:.0e}", ha="right", fontsize=7, color="0.4")
+    for ax in axes:
+        ax.set_xscale("log")
+        ax.set_ylabel("fraction of converged solutions")
+        ax.grid(alpha=0.3, which="both")
+        ax.legend(fontsize=8)
+    fig.suptitle("IK accuracy, workspace targets, priority method (CDF)")
+    fig.tight_layout()
+    fig.savefig(path, dpi=200)
+    plt.close(fig)
 
 def plot_failures(data, path):
-    pass
+    labels=[]
+    iters=[]
+    times=[]
+    for mode, method in CASES:
+        for start in ("warm", "cold"):
+            g=[r for r in data if r["set"]=="workspace" and r["mode"]==mode and r["method"]==method and r["start"]==start]
+            labels.append(f"{mode}\n{method}\n{start}")
+            iters.append([r["iterations"] for r in g])
+            times.append([r["time_ms"] for r in g])
+    fig, axes=plt.subplots(2, 1, figsize=(11, 6.5), sharex=True)
+    axes[0].boxplot(iters, showfliers=True, flierprops={"markersize": 2})
+    axes[0].set_ylabel("iterations (all seeds)")
+    axes[0].set_yscale("log")
+    axes[1].boxplot(times, showfliers=True, flierprops={"markersize": 2})
+    axes[1].set_ylabel("solve time [ms]")
+    axes[1].set_yscale("log")
+    axes[1].set_xticks(range(1, len(labels)+1), labels, fontsize=7)
+    for ax in axes:
+        ax.grid(alpha=0.3, axis="y", which="both")
+    fig.suptitle("IK cost, workspace targets")
+    fig.tight_layout()
+    fig.savefig(path, dpi=200)
+    plt.close(fig)
 
 def plot_iterations(data, path):
-    pass
+    fig, axes=plt.subplots(1, 2, figsize=(11, 4.6), sharey=True)
+    markers={
+        "pan_axis": "o",
+        "near_singular": "s",
+        "joint_limit": "^",
+        "near_miss": "+",
+        "local_minimum": "x"
+    }
+    for ax, start in zip(axes, ("warm", "cold")):
+        allp=[(r["r_m"], r["z_m"]) for r in data if r["set"]=="box" and r["start"]==start and r["mode"]=="position" and r["method"]=="priority"]
+        if allp:
+            a=np.array(allp)
+            ax.scatter(a[:,0], a[:,1], s=2, c="0.8", label="all targets")
+        for i, mode in enumerate(("position", "pitch", "pose")):
+            for cls, mk in markers.items():
+                f=[(r["r_m"], r["z_m"]) for r in data if r["set"]=="box" and r["start"]==start and r["mode"]==mode and r["method"]=="priority" and r["fail_class"]==cls]
+                if f:
+                    f=np.array(f)
+                    ax.scatter(f[:,0], f[:,1], s=18, marker=mk, color=f"C{i}", label=f"{mode}: {cls}")
+        ax.axhline(0.0, color="k", lw=1)
+        ax.set_xlabel("distance of the target from the pan axis [m]")
+        ax.set_title(f"{start} start")
+        ax.grid(alpha=0.3)
+        ax.legend(fontsize=7, loc="upper right")
+    axes[0].set_ylabel("target height z [m]")
+    fig.suptitle("IK failures, box targets, priority method")
+    fig.tight_layout()
+    fig.savefig(path, dpi=200)
+    plt.close(fig)
 
 def plot_singularity(data, path):
-    pass
+    fig, axes=plt.subplots(3, 1, figsize=(8, 7.5), sharex=True)
+    for i, name in enumerate(("pseudoinverse", "fixed_DLS", "adaptive_DLS")):
+        g=[r for r in data if r["inverse"]==name]
+        s=np.array([r["s_m"] for r in g])*100
+        axes[0].plot(s, [r["dq_norm_rad"] for r in g], color=f"C{i}", label=name)
+        axes[1].plot(s, np.maximum(np.array([r["err_m"] for r in g])*1000, 1e-6), color=f"C{i}", label=name)
+        axes[2].plot(s, [r["sigma"] for r in g], color=f"C{i}", label=name)
+    axes[0].set_ylabel("|dq| per step [rad]")
+    axes[0].set_yscale("log")
+    axes[1].set_ylabel("tracking error [mm]")
+    axes[1].set_yscale("log")
+    axes[1].set_ylim(1e-6, None)
+    axes[2].set_ylabel("sigma_min(J_p) [m/rad]")
+    axes[2].set_xlabel("target position along the line, relative to stretched-arm point [cm]")
+    for ax in axes:
+        ax.axvline(0.0, color="k", lw=1, ls=":")
+        ax.grid(alpha=0.3, which="both")
+    axes[0].legend(fontsize=8)
+    fig.suptitle("Resolved-rate tracking through the stretched-arm singularity")
+    fig.tight_layout()
+    fig.savefig(path, dpi=200)
+    plt.close(fig)
 
 def args_parse():
     parser=argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -329,7 +424,7 @@ def main():
         plot_errors(rows, FIG_DIR/"ik_errors.png")
         plot_iterations(rows, FIG_DIR/"ik_iterations.png")
         plot_failures(rows, FIG_DIR/"ik_failures.png")
-        plot_singularity(rows, FIG_DIR/"ik_singularity.png")
+        plot_singularity(sweep, FIG_DIR/"ik_singularity.png")
         
         print(f"\n{'set':9s} {'mode':8s} {'method':8s} {'start':5s} {'success':>9s} "
               f"{'pos err max':>12s} {'ori err max':>12s} {'it med':>6s} {'it p95':>6s} {'ms med':>7s} fails")
@@ -339,7 +434,7 @@ def main():
                   f"{s['success']:4d}/{s['n']:<4d} {s['pos_err_max_m']:12.2e} {s['ori_err_max_rad']:12.2e} "
                   f"{s['iter_median']:6.0f} {s['iter_p95']:6.0f} {s['time_ms_median']:7.2f} {fails or ''}")
         print("\nSingularity sweep:")
-        for name in ("pseudoinverse", "fixed DLS", "adaptive DLS"):
+        for name in ("pseudoinverse", "fixed_DLS", "adaptive_DLS"):
             g=[r for r in sweep if r["inverse"]==name]
             inside=[r for r in g if r["s_m"]<=0]
             print(f"    {name:14s} max |dq| {max(r['dq_norm_rad'] for r in g):9.3f} rad "

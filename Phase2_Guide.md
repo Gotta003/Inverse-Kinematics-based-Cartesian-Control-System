@@ -27,15 +27,15 @@ Then, the heading is not free, once the TCP position is fixed, only pitch and ro
 | Path | Content | Status | Role |
 |---|---|---|---|
 | `src/forward_kinematics.py` | FK with the PoE | from Phase 1 |  DONE |
-| `src/jacobian.py` | space and TCP Jacobian, conditioning metrics | new | Matteo |
+| `src/jacobian.py` | space and TCP Jacobian, conditioning metrics | new | DONE |
 | `src/inverse_kinematics.py` | IK solver, task modes, seeding, result type | new | Flavio |
 | `src/utils/helper.py` | add SO(3)/SE(3) helpers and the damped pseudoinverse | extended | Both |
 | `src/utils/constants.py` | add a Jacobian block and an IK block | extended | Both |
 | `src/utils/limits.py` | joint limits from the MuJoCo XML and the calibration file | new | DONE |
-| `src/utils/sim_checks.py` | MuJoCo contact checks at a configuration and along a joint path | new | Matteo |
+| `src/utils/sim_checks.py` | MuJoCo contact checks at a configuration and along a joint path | new | DONE |
 | `tests/test_jacobian.py` | Jacobian checks | new | Flavio |
-| `tests/test_ik.py` | named Cartesian targets and IK property tests | new | Matteo |
-| `simulation/ik_validation.py` | large-scale validation, CSVs, figures, viewer | new | Matteo |
+| `tests/test_ik.py` | named Cartesian targets and IK property tests | new | DONE |
+| `simulation/ik_validation.py` | large-scale validation, CSVs, figures, viewer | new | Miss Figures |
 | `hardware/ik_hardware.py` | safe IK test on the real arm, with dry run | new | Flavio |
 | `run.py`, `run.sh` | menu launcher and environment wrapper | extended |  |
 | `results/data/`, `results/figures/` | outputs of the scripts | generated | Both |
@@ -107,16 +107,16 @@ Then, the heading is not free, once the TCP position is fixed, only pitch and ro
     - [x] Singularities
 
 ## `simulation/ik_validation.py`
-- [ ] Target sets in a box configuration everywhere inside the limits and a workspace only the ones collision free using `sim_checks.py`
-- [ ] For every target, run each mode, each method and two starts (warm and cold)
-- [ ] heck every solution in MuJoCo and print summary with statistics like success rate, error median, 95th percentile, maximum, iterations, time and failures. The class of failures may be [`pan_axis`, `near_singular`, `joint limit`, `near-miss`, `local minimum`]
-- [ ] Singularity experiment
+- [x] Target sets in a box configuration everywhere inside the limits and a workspace only the ones collision free using `sim_checks.py`
+- [x] For every target, run each mode, each method and two starts (warm and cold)
+- [x] heck every solution in MuJoCo and print summary with statistics like success rate, error median, 95th percentile, maximum, iterations, time and failures. The class of failures may be [`pan_axis`, `near_singular`, `joint limit`, `near-miss`, `local minimum`]
+- [x] Singularity experiment
 - [ ] Generate figures:
     - [ ] Error CDFs (log scale with warm vs cold)
     - [ ] Iterations and time per case
     - [ ] Failure locations in radius-height plane
     - [ ] Singular Experiment
-- [ ] Viewer mode to visualize the simulated arm
+- [x] Viewer mode to visualize the simulated arm
 
 ## `hardware/ik_hardware.py`
 - [ ] Recycle most of `hardware/fk_hardware.py` with a change in plan with a specified plan of poses and a random plan by rejection.
