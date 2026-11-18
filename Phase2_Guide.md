@@ -28,12 +28,12 @@ Then, the heading is not free, once the TCP position is fixed, only pitch and ro
 |---|---|---|---|
 | `src/forward_kinematics.py` | FK with the PoE | from Phase 1 |  DONE |
 | `src/jacobian.py` | space and TCP Jacobian, conditioning metrics | new | DONE |
-| `src/inverse_kinematics.py` | IK solver, task modes, seeding, result type | new | Flavio |
+| `src/inverse_kinematics.py` | IK solver, task modes, seeding, result type | new | DONE |
 | `src/utils/helper.py` | add SO(3)/SE(3) helpers and the damped pseudoinverse | extended | Both |
 | `src/utils/constants.py` | add a Jacobian block and an IK block | extended | Both |
 | `src/utils/limits.py` | joint limits from the MuJoCo XML and the calibration file | new | DONE |
 | `src/utils/sim_checks.py` | MuJoCo contact checks at a configuration and along a joint path | new | DONE |
-| `tests/test_jacobian.py` | Jacobian checks | new | Flavio |
+| `tests/test_jacobian.py` | Jacobian checks | new | DONE |
 | `tests/test_ik.py` | named Cartesian targets and IK property tests | new | DONE |
 | `simulation/ik_validation.py` | large-scale validation, CSVs, figures, viewer | new | Miss Figures |
 | `hardware/ik_hardware.py` | safe IK test on the real arm, with dry run | new | Flavio |
