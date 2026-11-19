@@ -3,11 +3,13 @@ Menu
 1) FK tests (pytest)
 2) FK validation vs MuJoCo  simulation/fk_validation.py
 3) FK check on real arm     hardware/fk_hardware.py
-4) Simulation vs real arm   hardware/sim_vs_real.py
-5) Check robot connection   bus type + joint readings in radians
-6) Detect the port again
-7) Change robot (calibration file)
-8) Extract PoE and calibration data
+4) IK check on real arm     hardware/ik_hardware.py
+5) Simulation vs real arm   hardware/sim_vs_real.py
+6) Check robot connection   bus type + joint readings in radians
+7) Detect the port again
+8) Change robot (calibration file)
+9) Extract PoE and calibration data
+10) Render DH frames figure tools/render_dh_figure.py
 q) Quit
 """
 import glob
@@ -225,6 +227,7 @@ def main():
         "FK tests (pytest)",
         "FK validation vs MuJoCo",
         "FK check on the real arm",
+        "IK check on the real arm",
         "Simulation vs real arm",
         "Check robot connection",
         "Detect the port again",
@@ -259,6 +262,37 @@ def main():
                 continue
             args=["hardware/fk_hardware.py"]+(["--passive"] if mode==1 else [])
             run_hardware(cfg, args)
+        elif choice=="IK check on the real arm":
+            mode=menu("Mode", [
+                "real: the arm moves to every target that passes checks (torque ON)",
+                "dry run: IK + MuJoCo checks only, the arm never moves (no port needed)",
+            ])
+            if mode is None:
+                continue
+            plan=menu("Plan", [
+                "named: predefined Cartesian targets",
+                "random: random reachable targets",
+            ])
+            if plan is None:
+                continue
+            method_idx=menu("IK method", ["priority", "stacked"])
+            if method_idx is None:
+                continue
+            args=["hardware/ik_hardware.py", "--method", ("priority", "stacked")[method_idx]]
+            if plan==1:
+                n=ask("Number of random targets", 5)
+                seed=ask("Random seed", 0)
+                args+=["--plan", "random", "--n", n, "--seed", seed]
+            else:
+                args+=["--plan", "named"]
+            if mode==1:
+                args.append("--dry-run")
+                robot=cfg.get("robot") or choose_robot(cfg)
+                if robot:
+                    args+=["--robot", robot]
+                run([PYTHON]+args)
+            else:
+                run_hardware(cfg, args)
         elif choice=="Simulation vs real arm":
             names=pose_names()
             if names:
