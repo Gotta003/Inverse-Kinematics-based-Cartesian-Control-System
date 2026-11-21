@@ -34,18 +34,23 @@ BOLD="\033[1m"
 RESET="\033[0m"
 
 def info(msg):
+    """Print an information line (cyan)"""
     print(f"{CYAN}[INFO]{RESET} {msg}")
     
 def ok(msg):
+    """Print a success line (green)"""
     print(f"{GREEN}[OK]{RESET} {msg}")
     
 def warn(msg):
+    """Print a warning line (yellow)"""
     print(f"{YELLOW}[WARN]{RESET} {msg}")
     
 def err(msg):
+    """Print an error line (red)"""
     print(f"{RED}[ERROR]{RESET} {msg}")
 
 def load_config():
+    """Saved port and robot from .robot_config.json"""
     if CONFIG_FILE.is_file():
         try:
             return json.loads(CONFIG_FILE.read_text())
@@ -54,6 +59,7 @@ def load_config():
     return {}
 
 def menu(title, options):
+    """Print a numbered menu and return the 0-based index chosen"""
     print(f"\n{BOLD}{title}{RESET}")
     for i, opt in enumerate(options, 1):
         print(f"  {i}   {opt}")
@@ -63,6 +69,7 @@ def menu(title, options):
     return None
 
 def run(cmd):
+    """Run a commad in the repo folder"""
     print(f"\n{CYAN}$ {' '.join(cmd)}{RESET}\n")
     try:
         return subprocess.call(cmd, cwd=REPO_ROOT)
@@ -70,15 +77,18 @@ def run(cmd):
         return 130
 
 def ask(prompt, default):
+    """Ask for a value if Enter keeps the default"""
     raw=input(f"{prompt} [{default}]: ").strip()
     return raw or str(default)
 
 def ask_yes(prompt, default=False):
+    """Yes/no question with Enter keeps the default"""
     d="Y/n" if default else "y/N"
     raw=input(f"{prompt} [{d}]: ").strip().lower()
     return default if not raw else raw.startswith("y")
 
 def list_ports():
+    """Serial ports that can be the arm (pyserial)"""
     try:
         from serial.tools import list_ports as lp
         return sorted(p.device for p in lp.comports())
@@ -94,6 +104,7 @@ def list_ports():
     return sorted(p for pat in patterns for p in glob.glob(pat))
 
 def port_is_valid(port):
+    """True if the port exists and can be opened"""
     if not port or port not in list_ports():
         return False
     try:
@@ -110,6 +121,7 @@ def port_is_valid(port):
     return True
 
 def detect_port():
+    """Find arm's port by unplugging and re-plugging USB cable"""
     print(f"\n{BOLD}Finding the robot's serial port{RESET}")
     input("Make sure the arm's USB cable is CONNECTED, then press Enter...")
     before=set(list_ports())
@@ -137,9 +149,11 @@ def detect_port():
     return port
 
 def save_config(cfg):
+    """Write the port and robot to .robot_config.json"""
     CONFIG_FILE.write_text(json.dumps(cfg, indent=2))
 
 def get_port(cfg, force_detect=False):
+    """Saved port if still valid, otherwise detect it"""
     port=cfg.get("port")
     if not force_detect and port_is_valid(port):
         return port
@@ -156,6 +170,7 @@ def get_port(cfg, force_detect=False):
             return None
 
 def choose_robot(cfg):
+    """Choose the calibration file of the arm"""
     names=sorted(p.stem for p in CALIB_DIR.glob("*.json"))
     if not names:
         err(f"No calibration files in {CALIB_DIR}")
@@ -171,6 +186,7 @@ def choose_robot(cfg):
     return cfg["robot"]
 
 def run_hardware(cfg, args):
+    """Run a hardware script with --port and --robot"""
     port=get_port(cfg)
     if not port:
         warn("No valid port: hardware script not started.")
@@ -183,6 +199,7 @@ def run_hardware(cfg, args):
             get_port(cfg, force_detect=True)
 
 def pose_names():
+    """Named poses accepted by hardware/sim_vs_real.py"""
     import re
     try:
         out=subprocess.run([PYTHON, "hardware/sim_vs_real.py", "-h"], cwd=REPO_ROOT, capture_output=True, text=True, timeout=60).stdout
@@ -210,6 +227,7 @@ finally:
 """
 
 def check_connection(cfg):
+    """Read the joints once and print them to check the bus and that the readings are in radians"""
     port=get_port(cfg)
     if not port:
         return
@@ -224,11 +242,15 @@ def main():
         info(f"Saved port: {cfg['port']} robot: {cfg.get('robot', '-')}")
         
     items=[
-        "FK tests (pytest)",
-        "FK validation vs MuJoCo",
-        "FK check on the real arm",
-        "IK check on the real arm",
-        "Simulation vs real arm",
+        "[Phase 2] Jacobian + IK tests (pytest)",
+        "[Phase 2] IK on specified targets (MuJoCo)",
+        "[Phase 2] IK validation, 6000 solves + figures (MuJoCo)",
+        "[Phase 2] IK check on the real arm",
+        "[Phase 1] FK tests (pytest)",
+        "[Phase 1] FK validation vs MuJoCo",
+        "[Phase 1] FK check on the real arm",
+        "[Phase 1] Simulation vs real arm",
+        "All tests (pytest)",
         "Check robot connection",
         "Detect the port again",
         "Change robot (calibration file)",
@@ -244,25 +266,23 @@ def main():
         choice=items[idx]
         if choice=="Quit":
             break
-        elif choice=="FK tests (pytest)":
-            run([PYTHON, "-m", "pytest", "tests", "-v"])
-        elif choice=="FK validation vs MuJoCo":
-            n=ask("Number of random configurations", 2000)
-            seed=ask("Random seed", 0)
-            args=["simulation/fk_validation.py", "--n_random", n, "--seed", seed]
-            if ask_yes("Stop through the poses in the MuJoCo viewer"):
+        elif choice=="[Phase 2] Jacobian + IK tests (pytest)":
+            run([PYTHON, "-m", "pytest", "tests/test_jacobian.py", "tests/test_ik.py", "-v"])
+        elif choice=="[Phase 2] IK on specified targets (MuJoCo)":
+            args=["simulation/ik_targets.py", "--robot", cfg.get("robot", "jarvis")]
+            if ask_yes("Show the solutions in the MuJoCo viewer"):
                 args.append("--view")
             run([PYTHON]+args)
-        elif choice=="FK check on the real arm":
-            mode=menu("Mode", [
-                "commanded: the arm moves to the safe poses (torque ON)",
-                "passive: move the arm by hand (torque OFF, HOLD THE ARM)"
-            ])
-            if mode is None:
-                continue
-            args=["hardware/fk_hardware.py"]+(["--passive"] if mode==1 else [])
-            run_hardware(cfg, args)
-        elif choice=="IK check on the real arm":
+            info("Table above; data in results/data/ik_targets.csv")
+        elif choice=="[Phase 2] IK validation, 6000 solves + figures (MuJoCo)":
+            n=ask("Targets per set (300 = report, ~2 min)", 300)
+            args=["simulation/ik_validation.py", "--n", n, "--seed", ask("Random seed", 0)]
+            v=ask("Also show N solutions in the MuJoCo viewer (0 = no)", 0)
+            if v!="0":
+                args+=["--view", v]
+            run([PYTHON]+args)
+            info("Results in results/data/ik_validation*.csv, ik_singularity.csv and results/figures/ik_*.png")
+        elif choice=="[Phase 2] IK check on the real arm":
             mode=menu("Mode", [
                 "real: the arm moves to every target that passes checks (torque ON)",
                 "dry run: IK + MuJoCo checks only, the arm never moves (no port needed)",
@@ -293,7 +313,27 @@ def main():
                 run([PYTHON]+args)
             else:
                 run_hardware(cfg, args)
-        elif choice=="Simulation vs real arm":
+        elif choice=="[Phase 1] FK tests (pytest)":
+            run([PYTHON, "-m", "pytest", "tests/test_fk.py", "-v"])
+        elif choice=="All tests (pytest)":
+            run([PYTHON, "-m", "pytest", "tests", "-v"])
+        elif choice=="[Phase 1] FK validation vs MuJoCo":
+            n=ask("Number of random configurations", 2000)
+            seed=ask("Random seed", 0)
+            args=["simulation/fk_validation.py", "--n_random", n, "--seed", seed]
+            if ask_yes("Stop through the poses in the MuJoCo viewer"):
+                args.append("--view")
+            run([PYTHON]+args)
+        elif choice=="[Phase 1] FK check on the real arm":
+            mode=menu("Mode", [
+                "commanded: the arm moves to the safe poses (torque ON)",
+                "passive: move the arm by hand (torque OFF, HOLD THE ARM)"
+            ])
+            if mode is None:
+                continue
+            args=["hardware/fk_hardware.py"]+(["--passive"] if mode==1 else [])
+            run_hardware(cfg, args)
+        elif choice=="[Phase 1] Simulation vs real arm":
             names=pose_names()
             if names:
                 info(f"Available poses: {' '.join(names)}")
@@ -317,12 +357,12 @@ def main():
         elif choice=="Extract PoE":
             run([PYTHON]+["tools/extract_poe_params.py"])
         elif choice=="Render DH frames figure":
-            view=menu("View", ["3/4 perspective", "side (othographic)", "both"])
+            view=menu("View", ["3/4 perspective", "side (orthographic)", "both"])
             if view is None:
                 continue
             q=input("Joint angles q1-q5 in radians, space separated (Enter=home pose): ").split()
             if q and len(q)!=5:
-                err("Give 5 values or press Etner for home pose")
+                err("Give 5 values or press Enter for home pose")
                 continue
             extra=["--q"]+q if q else []
             views=[[], ["--side"]] if view==2 else [[] if view==0 else ["--side"]]

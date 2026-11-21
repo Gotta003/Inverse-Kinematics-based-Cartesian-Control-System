@@ -98,3 +98,21 @@ IK_MAX_ORI_ERR=0.5     # rad, clip on the orientation error fed to the solver
 IK_BACKTRACK=6         # max step halvings when the merit function increases
 IK_STALL_REL=1e-4      # relative merit improvement that counts as progress
 IK_MIN_STEP=1e-10      # rad, below this the step is considered vanished (stationary)
+
+IK_TARGETS={
+    "front_mid": ([250.0, 0.0, 150.0], 30.0),
+    "front_low": ([280.0, 0.0, 80.0], 60.0),
+    "front_high": ([220.0, 0.0, 300.0], 0.0),
+    "near_down": ([180.0, 0.0, 100.0], 70.0),
+    "far": ([320.0, 0.0, 120.0], 20.0),
+    "left": ([220.0, 120.0, 120.0], 45.0),
+    "right": ([220.0, -120.0, 120.0], 45.0),
+    "position_only": ([260.0, 60.0, 180.0], None),
+}
+
+IK_UNREACHABLE={
+    "beyond_reach": ([500.0, 0.0, 150.0], None),
+    "too_high": ([0.0, 0.0, 600.0], None),
+    "pitch_up_far": ([330.0, 0.0, 120.0], -60.0),
+    "inside_base": ([60.0, 0.0, 40.0], 90.0),
+}

@@ -55,6 +55,7 @@ from src.utils.constants import (
     POSITIONS,
     RND_SEED,
     SETTLE_TIME,
+    IK_TARGETS
 )
 from src.utils.limits import inv_kin_limits
 from src.utils.sim_checks import contacts
@@ -71,16 +72,7 @@ PATH_STEPS=50       # samples on the joint-space path
 LIMIT_TOL=1e-9
 
 # name: ([x, y, z] mm relative pan foot, pitch deg (+ = tool down) or None for position only)
-TARGETS={
-    "front_mid": ([250.0, 0.0, 150.0], 30.0),
-    "front_low": ([280.0, 0.0, 80.0], 60.0),
-    "front_high": ([220.0, 0.0, 300.0], 0.0),
-    "near_down": ([180.0, 0.0, 100.0], 70.0),
-    "far": ([320.0, 0.0, 120.0], 20.0),
-    "left": ([220.0, 120.0, 120.0], 45.0),
-    "right": ([220.0, -120.0, 120.0], 45.0),
-    "position_only": ([260.0, 60.0, 180.0], None),
-}
+TARGETS=IK_TARGETS
 
 def save_rows(rows):
     """Write the rows to OUT_CSV and print a summary: targets that passed the checks,
