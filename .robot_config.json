@@ -1,4 +1,4 @@
 {
-  "port": "/dev/cu.usbmodem5B3D0504251",
+  "port": "/dev/ttyACM0",
   "robot": "didier"
 }

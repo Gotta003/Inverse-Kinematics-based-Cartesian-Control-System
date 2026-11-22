@@ -4,12 +4,13 @@ from pathlib import Path
 REPO_ROOT=Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
-import numpy as np
 import mujoco
-from src.forward_kinematics import SO_101_fk
+
 from src.utils.constants import N_JOINTS
 
+
 def contacts(m, d, q, gripper=0.0):
+    """Checks that there is no contact with the robot components and with teh floor"""
     d.qpos[:]=0.0
     d.qpos[:N_JOINTS]=q
     if m.nq>N_JOINTS:

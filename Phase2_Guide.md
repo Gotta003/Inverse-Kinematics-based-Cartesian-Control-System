@@ -45,19 +45,19 @@ Then, the heading is not free, once the TCP position is fixed, only pitch and ro
 - [x] TCP Jacobian implementation so a function `tcp_jacobian(q)` that outputs J_$\omega$ and J_p. It is done since MuJoCo has a function called `mj_jacSite` returns TCP Jacobian, so to test is required
 - [x] Conditioning metrics computation in a function `jacobian_metrics(J), returning singular values, smallest singular value $\sigma$_min, manipulability and condition number
 - [x] Do a `__main__` to test q=0 (output equal to screw axes) amd TCP Jacobian at q=0 with its singular values
-- [ ] In `tests/test_jacobian.py` we need to run 3 independent tests:
-    - [ ] Structure of J_s(0) equals screw axes
-    - [ ] Check output differences with FK (like vee check)
-    - [ ] Check J_TCP against mj_jacsite on gripper frame after mj_forward testing
+- [x] In `tests/test_jacobian.py` we need to run 3 independent tests:
+    - [x] Structure of J_s(0) equals screw axes
+    - [x] Check output differences with FK (like vee check)
+    - [x] Check J_TCP against mj_jacsite on gripper frame after mj_forward testing
 
 ## `src/utils/`
-- [ ] `helper.py` for math helpers and damped pseudoinverse
+- [x] `helper.py` for math helpers and damped pseudoinverse
     - [x] Skew
-    - [ ] Vee
+    - [x] Vee
     - [x] Adjoint
-    - [ ] Inverse Homogeneous Transform
-    - [ ] SO(3) logarithm
-    - [ ] damped pseudoinverse, it should return the pseudoinverse, monitored singular value $\sigma$, the $\lambda$ used and null-space projector (this is to have an adaptive damping to stay away from singularities with step exact pseudoinverse, to preserve accuracy loss, SVD gives $\sigma$_min and allows truncating singular values that are zero by construction, can have a primary and a secondary task assigned)
+    - [x] Inverse Homogeneous Transform
+    - [x] SO(3) logarithm
+    - [x] damped pseudoinverse, it should return the pseudoinverse, monitored singular value $\sigma$, the $\lambda$ used and null-space projector (this is to have an adaptive damping to stay away from singularities with step exact pseudoinverse, to preserve accuracy loss, SVD gives $\sigma$_min and allows truncating singular values that are zero by construction, can have a primary and a secondary task assigned)
 - [x] `constants.py` add a Jacobian and IK block
 - [x] `limits.py` for joint limits
     - [x] Read joint ranges directly from MuJoCo XML
@@ -65,31 +65,31 @@ Then, the heading is not free, once the TCP position is fixed, only pitch and ro
     - [x] Intersection of the two ranges and shrink the result by safety margin
 - [x] `sim_checks.py` MuJoCo collision checks (mainly for checking for validation and hardware)
     - [x] A function that returns the contacts at a configuration like floor or link to link
-    - [ ] A function that samples a oint-space straight segment and returns new contacts and the lowest TCP height along it
+    - [x] A function that samples a oint-space straight segment and returns new contacts and the lowest TCP height along it
 
 ## `src/inverse_kinematics.py`
-- [ ] Result object (dataclass in Python) with: configuration, success flag, status (`converged`, `stalled`, `stationary`, `max_iters`), final position and orientation errors, iterations, restarts, $\sigma$_min at the solution and solve time and history
-- [ ] Implement functions to perform inverse kinematics having a target position (`ik_position`), a pitch (`ik_pitch`), a target pose (`ik_pose`) and a general `inverse_kinematics`
-- [ ] Tasks implementation:
-    - [ ] position
-    - [ ] pitch
-    - [ ] pose
-- [ ] Creation of priority levels:
-    - [ ] priority (Combining position and orientation)
-    - [ ] stacked (one stacked weighted DLS on J_p and w·J_o)
-- [ ] Check damping and fix parameters and constants to set a good threshold
-- [ ] Control step at each iteration
-    - [ ] Clip norms of the position and orientation errors, fed to solver and scale $\Delta q$, so no joint moves more than a max step
-    - [ ] If step increases a merit function performs a backtrack halving it
-    - [ ] Clip q to joint limits
-- [ ] Convergence criteria:
-    - [ ] `converged`: Position error is below a fraction of a mm and when the mode has an orientation task, the orientation too has to have that error;
-    - [ ] `stalled`: merit function has not improved for a number of iterations;
-    - [ ] `stationary`: step vanishes
-    - [ ] `max_iters`: max number of iterations reached
-- [ ] Joint Limits should use an active-set clamping, so if the step would push some joints past a limit, they should be moved exactly to the limit, remove Jacobian columns, re-solve and compensate the clamped motion and repeat until no new joint saturates
-- [ ] Seeding and restarts: if a configuration doesn't work try another seed for a distant target, but for consecutive a warm start converges in a few iterations and stays on same solution branch disabling restarts
-- [ ] Add `__main__` to perform a check
+- [x] Result object (dataclass in Python) with: configuration, success flag, status (`converged`, `stalled`, `stationary`, `max_iters`), final position and orientation errors, iterations, restarts, $\sigma$_min at the solution and solve time and history
+- [x] Implement functions to perform inverse kinematics having a target position (`ik_position`), a pitch (`ik_pitch`), a target pose (`ik_pose`) and a general `inverse_kinematics`
+- [x] Tasks implementation:
+    - [x] position
+    - [x] pitch
+    - [x] pose
+- [x] Creation of priority levels:
+    - [x] priority (Combining position and orientation)
+    - [x] stacked (one stacked weighted DLS on J_p and w·J_o)
+- [x] Check damping and fix parameters and constants to set a good threshold
+- [x] Control step at each iteration
+    - [x] Clip norms of the position and orientation errors, fed to solver and scale $\Delta q$, so no joint moves more than a max step
+    - [x] If step increases a merit function performs a backtrack halving it
+    - [x] Clip q to joint limits
+- [x] Convergence criteria:
+    - [x] `converged`: Position error is below a fraction of a mm and when the mode has an orientation task, the orientation too has to have that error;
+    - [x] `stalled`: merit function has not improved for a number of iterations;
+    - [x] `stationary`: step vanishes
+    - [x] `max_iters`: max number of iterations reached
+- [x] Joint Limits should use an active-set clamping, so if the step would push some joints past a limit, they should be moved exactly to the limit, remove Jacobian columns, re-solve and compensate the clamped motion and repeat until no new joint saturates
+- [x] Seeding and restarts: if a configuration doesn't work try another seed for a distant target, but for consecutive a warm start converges in a few iterations and stays on same solution branch disabling restarts
+- [x] Add `__main__` to perform a check
 
 ## `tests/test_ik.py`
 - [x] Define targets (reachable, unreachable and non-converging)
@@ -111,35 +111,35 @@ Then, the heading is not free, once the TCP position is fixed, only pitch and ro
 - [x] For every target, run each mode, each method and two starts (warm and cold)
 - [x] heck every solution in MuJoCo and print summary with statistics like success rate, error median, 95th percentile, maximum, iterations, time and failures. The class of failures may be [`pan_axis`, `near_singular`, `joint limit`, `near-miss`, `local minimum`]
 - [x] Singularity experiment
-- [ ] Generate figures:
-    - [ ] Error CDFs (log scale with warm vs cold)
-    - [ ] Iterations and time per case
-    - [ ] Failure locations in radius-height plane
-    - [ ] Singular Experiment
+- [x] Generate figures:
+    - [x] Error CDFs (log scale with warm vs cold)
+    - [x] Iterations and time per case
+    - [x] Failure locations in radius-height plane
+    - [x] Singular Experiment
 - [x] Viewer mode to visualize the simulated arm
 
 ## `hardware/ik_hardware.py`
-- [ ] Recycle most of `hardware/fk_hardware.py` with a change in plan with a specified plan of poses and a random plan by rejection.
-- [ ] Check the full chain in MuJoCo and after that triggers the movement, if any check fails, print reasons, but nothing moves
+- [x] Recycle most of `hardware/fk_hardware.py` with a change in plan with a specified plan of poses and a random plan by rejection.
+- [x] Check the full chain in MuJoCo and after that triggers the movement, if any check fails, print reasons, but nothing moves
 
 ## `run.py`
-- [ ] Extend the menu including the new modalities:
-    - [ ] Generalize the tests on all test files
-    - [ ] IK validation vs MuJoCo
-    - [ ] IK test on real arm
+- [x] Extend the menu including the new modalities:
+    - [x] Generalize the tests on all test files
+    - [x] IK validation vs MuJoCo
+    - [x] IK test on real arm
 
 ## Report
 1) Method:
-- [ ] Jacobian with space Jacobian, TCP and verification
-- [ ] IK Solver with task modes, task priority and adaptive DLS
-- [ ] Convergence criteria and parameter table
-- [ ] Joint-limit handling: limits source, clamping and null-space centering
-- [ ] Singularities with adaptive damping, $\sigma$_min monitoring and step control
+- [x] Jacobian with space Jacobian, TCP and verification
+- [x] IK Solver with task modes, task priority and adaptive DLS
+- [x] Convergence criteria and parameter table
+- [x] Joint-limit handling: limits source, clamping and null-space centering
+- [x] Singularities with adaptive damping, $\sigma$_min monitoring and step control
 2) Validation:
-- [ ] Named target table from `tests/test_ik.py`
-- [ ] Compact summary of large-scale validation from `simulation/ik_validation.py`
-- [ ] Singularity figure and error figure
+- [x] Named target table from `tests/test_ik.py`
+- [x] Compact summary of large-scale validation from `simulation/ik_validation.py`
+- [x] Singularity figure and error figure
 3) Failure cases and limitations + Hardware
-- [ ] Failure Classes
-- [ ] Limits of 5D arm
-- [ ] Planning and measured errors
+- [x] Failure Classes
+- [x] Limits of 5D arm
+- [x] Planning and measured errors

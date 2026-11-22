@@ -127,21 +127,23 @@ def random_plan(m, d, limits, n, seed):
     print(f"Random plan: {n} targets accepted out of {drawn} draws")
     return plan
 
-def path_reasons(m, d, q_start, q_goal):
+def path_reasons(m, d, q_start, q_goal,back_to_start=False):
     """Check the linear joint-space path q_start -> q_goal (the one Arm.move follows)
     on PATH_STEPS samples. Contacts already present at q_start are ignored.
     Returns the reason of the first failure (new contact or TCP below Z_MIN), empty list if safe"""
     reasons=[]
-    start_contacts=contacts(m, d, q_start)
+    ends=[q_start, q_goal] if back_to_start else [q_start]
+    allowed=frozenset().union(*(contacts(m, d, q) for q in ends))
+    z_lim=min(Z_MIN, min(SO_101_fk(q)[2,3] for q in ends)-0.005)
     for s in np.linspace(0.0, 1.0, PATH_STEPS+1)[1:]:
         q=(1-s)*q_start+s*q_goal
-        new=contacts(m, d, q)-start_contacts
+        new=contacts(m, d, q)-allowed
         if new:
             reasons.append(f"path contact at s={s:.2f}: {sorted(new)}")
             break
         z=SO_101_fk(q)[2,3]
-        if z<Z_MIN:
-            reasons.append(f"path TCP too low at s={s:.2f}: z={z*1000:.1f} mm < {Z_MIN*1000:.0f} mm")
+        if z<z_lim:
+            reasons.append(f"path TCP too low at s={s:.2f}: z={z*1000:.1f} mm < {z_lim*1000:.1f} mm")
             break
     return reasons
 
@@ -306,8 +308,14 @@ def main():
         rows=run_plan(None if args.dry_run else arm, m, d, site_id, limits, plan, args.method, q_start)
         if not args.dry_run:
             input("\nEnter to return to start pose...")
-            arm.move({j: start[j] for j in JOINT_NAMES}, MOVE_TIME)
-            arm.hold(SETTLE_TIME)
+            back=path_reasons(m, d, arm.read_arm(), q_start, back_to_start=True)
+            if back:
+                print("Return path NOT SAFE, the arm does not move:")
+                for r in back:
+                    print(f" - {r}")
+            else:
+                arm.move({j: start[j] for j in JOINT_NAMES}, MOVE_TIME)
+                arm.hold(SETTLE_TIME)
     except KeyboardInterrupt:
         if not args.dry_run:
             arm.freeze()

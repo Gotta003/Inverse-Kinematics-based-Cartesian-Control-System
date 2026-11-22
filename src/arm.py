@@ -7,9 +7,11 @@ sys.path.insert(0, str(REPO_ROOT))
 import numpy as np
 
 from src.utils.constants import ALL_JOINT_NAMES, JOINT_NAMES, LOOP_HZ, POSES
-from utils.so101_utils import setup_motors, load_calibration
+from utils.so101_utils import load_calibration, setup_motors
+
 
 class Arm:
+    """Arm class that regulates the hardware connection and operations"""
     def __init__(self, bus, degrees_mode):
         self.bus=bus
         self.degrees_mode=degrees_mode

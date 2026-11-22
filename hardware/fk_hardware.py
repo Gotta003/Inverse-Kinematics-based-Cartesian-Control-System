@@ -49,6 +49,7 @@ SCENE_XML = REPO_ROOT / "model_files" / "scene.xml"
 PAN_FOOT=np.array([POSITIONS[0, 0], POSITIONS[0, 1], 0.0])
 
 def save_rows(rows):
+    """Write the rows to OUT_CSV and print the FK summary"""
     if not rows:
         return
     OUT_CSV.parent.mkdir(parents=True, exist_ok=True)
@@ -62,15 +63,18 @@ def save_rows(rows):
         print(f"FK vs ruler: max {max(errs):.1f} mm, mean {np.mean(errs):.1f} mm over {len(errs)} measured poses")
     
 def load_limits():
+    """Joint limits [rad] from MuJoCo model as an (N_JOINTS, 2) array of [min, max] ordered as JOINT_NAMES"""
     from utils.so101_mujoco_utils import mujoco_starting
     m,_,_=mujoco_starting(str(SCENE_XML))
     limits=derive_limits(m, N_JOINTS)
     return np.array([limits[j] for j in JOINT_NAMES])
         
 def within_limits(q, limits):
+    """True if every joint of q is inside the limits with some MARGIN"""
     return bool(np.all(q>=limits[:,0]+LIMIT_MARGIN) and np.all(q<=limits[:,1]-LIMIT_MARGIN))
 
 def ask_measure():
+    """Ask the TCP measured relavtive to pan foot"""
     raw=input("Measured TCP [x, y, z] mm relative pan foot (Enter to skip):").strip()
     if not raw:
         return None
@@ -84,6 +88,7 @@ def ask_measure():
         return None
 
 def report_pose(name, q_send, q_recv):
+    """Print the read joint angles and tracking error adn FK TCP in the base frame and relative to the pan foot"""
     p_base=SO_101_fk(q_recv)[:3,3]
     p_rel=p_base-PAN_FOOT
     print(f"q measured [def]: {np.round(np.degrees(q_recv), 1)}")
@@ -109,6 +114,7 @@ def report_pose(name, q_send, q_recv):
         
 
 def run_commanded(arm, limits):
+    """Commanded mode with each pose in POSES ask for confirmation, mvoe the arm there and let it settle and report it"""
     rows=[]
     for name, q in POSES.items():
         q=np.array(q, dtype=float)
@@ -126,6 +132,7 @@ def run_commanded(arm, limits):
     return rows
 
 def run_passive(arm):
+    """Passive mode enables manual move and then read and report every pose the user sets"""
     input("\nHOLD ARM WITH HAND, then press Enter to torque OFF...")
     arm.close()
     print("Tip: first put the arm in the 'L' (zero) pose with q close to 0")
@@ -139,6 +146,7 @@ def run_passive(arm):
     return rows
 
 def args_parse():
+    """Arguments to the script"""
     parser=argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--port", required=True, help="Serial Port")
     parser.add_argument("--robot", default="jarvis", help="name of calibration in calibration_files/<robot>.json")
@@ -146,6 +154,7 @@ def args_parse():
     return parser.parse_args()
 
 def main():
+    """Connect arm, record pose and run the selected mode"""
     args=args_parse()
     limits=load_limits()
     arm=Arm.connect(args.robot, args.port)

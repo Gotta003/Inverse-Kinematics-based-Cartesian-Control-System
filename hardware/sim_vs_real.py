@@ -51,12 +51,15 @@ FIG_DIR=REPO_ROOT/"results"/"figures"
 DEFAULT_SEQUENCE=["zero", "elbow_up", "high_reach", "reach_forward", "wrist_down", "compact", "side_mixed"]
 
 def gripper_to_sim(g):
+    """Gripper command of the real arm to the MujoCo gripper joint angle [rad]"""
     return g*np.pi/100.0
 
 def gripper_from_sim(r):
+    """MuJoCo gripper joint angle [rad] to the real arm scale (0-100)"""
     return r*100.0/np.pi
 
 def build_plan(start, waypoints, dt=1.0/LOOP_HZ):
+    """Command trajectory sampled according to LOOP_HZ and line will move of MOVE_TIME"""
     ts, cmds, t, prev=[], [], 0.0, dict(start)
     for wp in waypoints:
         for duration, moving in ((MOVE_TIME, True), (SETTLE_TIME, False)):
@@ -69,7 +72,9 @@ def build_plan(start, waypoints, dt=1.0/LOOP_HZ):
     return np.array(ts), {j: np.array([c[j] for c in cmds]) for j in ALL_JOINT_NAMES}, t
 
 class LivePlot:
+    """Live figure with one subplot per joint and gripper"""
     def __init__(self, plan_t, plan_cmd, total_time):
+        """Create figure, draw curves and lines"""
         plt.ion()
         n=len(ALL_JOINT_NAMES)
         self.fig, self.axes=plt.subplots(n, 1, figsize=(10, 1.9*n), sharex=True)
@@ -100,17 +105,20 @@ class LivePlot:
         self._last=0.0
         
     def _on_draw(self, _event):
+        """After a full redraw save the new background and redraw lines"""
         self.bg=self.fig.canvas.copy_from_bbox(self.fig.bbox)
         for a in self._artists():
             self.fig.draw_artist(a)
             
     def add(self, source, t, q):
+        """Store one sample q at time t for each source"""
         d=self.data[source]
         d["t"].append(t)
         for j in ALL_JOINT_NAMES:
             d[j].append(q[j])
             
     def refresh(self, force=False):
+        """Redraw lines with stored samples and at most once per PLOT_PERIOD"""
         now=time.perf_counter()
         if not force and now-self._last<PLOT_PERIOD:
             return
@@ -129,30 +137,36 @@ class LivePlot:
         canvas.flush_events()
     
     def set_status(self, text):
+        """Show text as the figure title and redraw immediately"""
         self.title.set_text(text)
         self.refresh(force=True)
     
     def _artists(self):
+        """Animated artists with title and all lines"""
         return [self.title] + [ln for src in self.lines.values() for ln in src.values()]
     
     def save(self, path):
+        """Save the figure to path"""
         for a in self._artists():
             a.set_animated(False)
         path.parent.mkdir(parents=True, exist_ok=True)
         self.fig.savefig(path, dpi=120)
 
 class LiveLog(list):
+    """List of log rows that also feeds every appended row to the live plot. Arm.move and Arm.hold append to it, so the real curve updates while the arm moves"""
     def __init__(self, plot, source):
         super().__init__()
         self.plot=plot
         self.source=source
         
     def append(self, row):
+        """Store the row, add its measured q to the plot and refresh it"""
         super().append(row)
         self.plot.add(self.source, row[0], row[2])
         self.plot.refresh()
 
 def run_simulation(start, waypoints, live, arm, show_viewer=True):
+    """Run the trajectory in MuJoCo in real time and log it at LOOP_HZ. Contacts already present at the start pose are allowed on the first and the last segment with any other floor or self contact blocks the hardware"""
     m=mujoco.MjModel.from_xml_path(str(SCENE_XML))
     d=mujoco.MjData(m)
     floor={i for i in range(m.ngeom) if m.geom(i).name=="floor"}
@@ -245,6 +259,7 @@ def run_simulation(start, waypoints, live, arm, show_viewer=True):
     return sim_log
 
 def run_hardware(waypoints, live, arm):
+    """Run the same waypoints on the real arm, logging command and read angles into a LiveLog"""
     real_log, t=LiveLog(live, "real"), 0.0
     live.set_status("Hardware running... (Ctrl+C freezes arm)")
     try:
@@ -263,6 +278,7 @@ def run_hardware(waypoints, live, arm):
     return real_log
 
 def unpack(log):
+    """Split a log of (t, command, q) rows into time"""
     ts=np.array([r[0] for r in log])
     cmd={j: [] for j in ALL_JOINT_NAMES}
     measures={j: [] for j in ALL_JOINT_NAMES}
@@ -275,6 +291,7 @@ def unpack(log):
     return ts, {j: np.array(v) for j, v in cmd.items()}, {j: np.array(v) for j, v in measures.items()}
 
 def real_to_sim_time(real_log):
+    """Map the real log times onto the simulation time axis. the real moves and holds do not last exactly MOVE_TImE/SETTLE_TIME, so each real move and hold is stretched linearly onto its nominal slot k*(MOVE_TIME+SETTLE_TIME)"""
     seg_len=MOVE_TIME+SETTLE_TIME
     segs, prev_hold=[], True
     for t, cmd, _ in real_log:
@@ -294,6 +311,7 @@ def real_to_sim_time(real_log):
     return np.array(mapped)
 
 def compare(sim_log, real_log, live):
+    """Compare real vs commanded and real vs MuJoCo"""
     ts_s, _, sim_q=unpack(sim_log)
     ts_r, real_cmd, real_q=unpack(real_log)
     t_map=real_to_sim_time(real_log)
@@ -381,6 +399,7 @@ def args_parse():
     return parser.parse_args()
 
 def main():
+    """Connect, build start -> poses -> start, simulate, run on hardware if approved, compare and save CSV and figures"""
     args=args_parse()
     arm=Arm.connect(args.robot, args.port)
     start=arm.read()

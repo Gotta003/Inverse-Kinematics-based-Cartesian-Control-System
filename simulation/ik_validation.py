@@ -67,6 +67,7 @@ SHOULDER_LIFT_POINT=np.array([0.0692345, -0.0182778, 0.1166])
 FLOOR=1e-10
 
 def view_solutions(m, d, Q, seconds=2.0):
+    """Show IK solutions in the MuJoCo viewer"""
     try:
         import mujoco.viewer
         viewer=mujoco.viewer.launch_passive(m, d)
@@ -106,16 +107,20 @@ def view_solutions(m, d, Q, seconds=2.0):
             time.sleep(0.1)
 
 def radial(p):
+    """Horizontal distance of p from the shoulder_pan axis"""
     return float(np.hypot(*(p[:2]-PAN_AXIS_XY)))
 
 def facing(q, p):
+    """True if the arm at q points toward p"""
     return bool(np.cos(heading_of(p)+q[0])>0)
 
 def in_workspace(m, d, q):
+    """Workspace filter: TCP at least Z_MIN above the table, at least R_MIN from the pan axis, facing the target and without contacts in MuJoCo"""
     p=SO_101_fk(q)[:3, 3]
     return p[2]>=Z_MIN and radial(p)>=R_MIN and facing(q, p) and not contacts(m, d, q)
 
 def sample_targets(m, d, lim, n, seed, workspace):
+    """Draw n target configurations uniformly in the limits or by rejection with in_workspace. Returns them and the number of draws"""
     rng=np.random.default_rng(seed)
     out=[]
     drawn=0
@@ -127,10 +132,12 @@ def sample_targets(m, d, lim, n, seed, workspace):
     return np.array(out), drawn
 
 def rotation_angle(R_a, R_b):
+    """Angle of the relative rotation R_a R_b^T"""
     R=R_a@R_b.T
     return float(np.arctan2(np.linalg.norm(vee_so3(R-R.T))/2.0, (np.trace(R)-1.0)/2.0))
 
 def failure_class(q, res, lim):
+    """Why a solved failed: pan_axis, near_singular, joint_limit, near_miss, local_minimum"""
     if res.success:
         return ""
     p=SO_101_fk(q)[:3, 3]
@@ -145,6 +152,7 @@ def failure_class(q, res, lim):
     return "local_minimum"
 
 def run_case(m, d, site_id, lim, q, mode, method, start, rng):
+    """Solve one target with one mode/method/start, no restarts"""
     T=SO_101_fk(q)
     kw={
         "method": method
@@ -193,6 +201,7 @@ def run_case(m, d, site_id, lim, q, mode, method, start, rng):
     return row
 
 def run_validation(m, d, site_id, lim, sets, seed):
+    """Run every target of every set with every start and CASES entry. Returns all rows"""
     rows=[]
     for name, Q in sets.items():
         t0=time.perf_counter()
@@ -209,6 +218,7 @@ def run_validation(m, d, site_id, lim, sets, seed):
     return rows
 
 def summarize(rows):
+    """Group the rows by set/mode/method/start: success rate, error statistics of the converged solves, iterations, time and failure classes"""
     groups=defaultdict(list)
     for r in rows:
         groups[(r["set"], r["mode"], r["method"], r["start"])].append(r)
@@ -245,6 +255,7 @@ def summarize(rows):
     return out
 
 def singularity_sweep(lim, steps=400, before=0.10, beyond=0.01):
+    """Resolved-rate tracking of a straight line through the stretched-arm singularity with the plain pseudoinverse, a fixed DLS and the adaptive DLS. Returns one row per step and inverse"""
     q_s=np.array([0.0, 0.0, np.radians(-78.44), 0.0, 0.0])
     p_s=SO_101_fk(q_s)[:3, 3]
     s=np.linspace(-before, beyond, steps+1)
@@ -277,6 +288,7 @@ def singularity_sweep(lim, steps=400, before=0.10, beyond=0.01):
     return rows
 
 def save_csv(data, path):
+    """Write a list of dicts to path as CSV"""
     path.parent.mkdir(parents=True, exist_ok=True)
     if data is None:
         print(f"Error saving data in file {path}")
@@ -287,6 +299,7 @@ def save_csv(data, path):
         w.writerows(data)
 
 def plot_errors(data, path):
+    """CDF of the MuJoCo position and orientation errors of the converged solves (workspace, priority)"""
     fig, axes=plt.subplots(1, 2, figsize=(11, 4.2))
     for i, mode in enumerate(("position", "pitch", "pose")):
         for start, ls in (("warm", "-"), ("cold", "--")):
@@ -312,6 +325,7 @@ def plot_errors(data, path):
     plt.close(fig)
 
 def plot_failures(data, path):
+    """Where the failures are target distance, by mode and failure class"""
     labels=[]
     iters=[]
     times=[]
@@ -337,6 +351,7 @@ def plot_failures(data, path):
     plt.close(fig)
 
 def plot_iterations(data, path):
+    """Box plots of iterations and solve time per mode/method/start (workspace set)"""
     fig, axes=plt.subplots(1, 2, figsize=(11, 4.6), sharey=True)
     markers={
         "pan_axis": "o",
@@ -368,6 +383,7 @@ def plot_iterations(data, path):
     plt.close(fig)
 
 def plot_singularity(data, path):
+    """Step size, tracking error and sigma_min along the singularity sweep for the three inverses"""
     fig, axes=plt.subplots(3, 1, figsize=(8, 7.5), sharex=True)
     for i, name in enumerate(("pseudoinverse", "fixed_DLS", "adaptive_DLS")):
         g=[r for r in data if r["inverse"]==name]
@@ -400,6 +416,7 @@ def args_parse():
     return parser.parse_args()
 
 def main():
+    """Sample the targets, run the validation and the singularity sweep, save CSVs and figures, print the summary"""
     args=args_parse()
     m, d, site_id=mujoco_starting(str(SCENE_XML))
     lim=default_limits()

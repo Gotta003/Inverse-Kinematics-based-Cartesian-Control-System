@@ -14,6 +14,7 @@ CALIB_DIR=REPO_ROOT/"calibration_files"
 TICKS_PER_REVOLUTION=4096
 
 def model_limits(xml_path=MODEL_XML):
+    """Limits computation from the XML file"""
     ranges={}
     for j in ET.parse(xml_path).getroot().iter("joint"):
         if j.get("name") in JOINT_NAMES and j.get("range"):
@@ -21,6 +22,7 @@ def model_limits(xml_path=MODEL_XML):
     return np.array([ranges[n] for n in JOINT_NAMES])
 
 def calibration_limits(robot="jarvis", calib_dir=CALIB_DIR):
+    """Limits computation from the calibration file"""
     calib=json.loads((Path(calib_dir)/f"{robot}.json").read_text())
     rows=[]
     for n in JOINT_NAMES:
@@ -29,6 +31,7 @@ def calibration_limits(robot="jarvis", calib_dir=CALIB_DIR):
     return np.array(rows)
 
 def inv_kin_limits(robot=None, margin=LIMIT_MARGIN):
+    """Limits computation combining the model and the calibration to make the inverse kinematics limits"""
     lim=model_limits()
     if robot is not None:
         cal=calibration_limits(robot)

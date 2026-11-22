@@ -8,8 +8,9 @@ Outputs:
     results/figures/fk_poses.png    3D graph showing poses
     
 Run:
-    python fk_validation.py         Run validation without showing anything
-    python fk_validation.py --show  Shows also steps in Mujoco
+    python simulation/fk_validation.py         Run validation without showing anything
+    python simulation/fk_validation.py --view  Shows also steps in Mujoco
+    python simulation/fk_validation.py --n_random 2000 -seed 1
 """
 import sys
 from pathlib import Path
@@ -35,17 +36,20 @@ DATA_DIR=REPO_ROOT/"results"/"data"
 FIG_DIR=REPO_ROOT/"results"/"figures"
 
 def sample_configs(limits, n, seed):
+    """Draw n joint configurations uniformly inside the joint limits and returns an (n, N_JOINTS) array [rad]"""
     rng=np.random.default_rng(seed)
     lowers=np.array([limits[name][0] for name in JOINT_NAMES])
     uppers=np.array([limits[name][1] for name in JOINT_NAMES])
     return rng.uniform(lowers, uppers, size=(n, N_JOINTS))
 
 def compare(m, d, site_id, q):
+    """FK vs MuJoCo at q and returns our TCP pose, the MuJoCo TCP pose, the position error and the rotation error between them"""
     T_ours=SO_101_fk(q)
     T_ref=mujoco_tcp(m, d, site_id, q)
     return (T_ours, T_ref, position_error(T_ours, T_ref), rotation_error(T_ours[:3, :3], T_ref[:3, :3]))
 
 def named_pose_rows(m, d, site_id):
+    """One CSV row per named pose"""
     rows=[]
     for name, q in POSES.items():
         T_ours, T_ref, e_p, e_r=compare(m, d, site_id, np.array(q, dtype=float))
@@ -60,6 +64,7 @@ def named_pose_rows(m, d, site_id):
     return rows
 
 def random_rows(m, d, site_id, Q):
+    """One CSV row per random configuration"""
     rows=[]
     for k, q in enumerate(Q):
         T_ours, T_ref, e_p, e_r=compare(m, d, site_id, q)
@@ -74,6 +79,7 @@ def random_rows(m, d, site_id, Q):
     return rows
 
 def save_csv(rows, path):
+    """Write the rows (list of dicts with the same keys) to path, creating the folder if needed"""
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", newline="") as f:
         writer=csv.DictWriter(f, fieldnames=list(rows[0].keys()))
@@ -81,6 +87,7 @@ def save_csv(rows, path):
         writer.writerows(rows)
 
 def view_poses(m, d, site_id, seconds_per_pose=2.5):
+    """Show every named pose in the MuJoCo viewer for seconds_per_pose"""
     import mujoco.viewer
     with mujoco.viewer.launch_passive(m, d) as viewer:
         for name, q, in POSES.items():
@@ -94,6 +101,7 @@ def view_poses(m, d, site_id, seconds_per_pose=2.5):
             time.sleep(seconds_per_pose)
 
 def joint_points(q):
+    """Positions of the points drawn as the arm"""
     pts=[np.array([POSITIONS[0, 0], POSITIONS[0, 1], 0.0])]
     T=np.eye(4)
     for i in range(N_JOINTS):
@@ -103,6 +111,7 @@ def joint_points(q):
     return np.array(pts)
 
 def plot_named_poses(m, d, site_id, path):
+    """Side view of the named poses with shoulder_pan=0: links from joint_points as lines, MuJoCo TCP as crosses, table shaded. Saved to path"""
     fig, ax=plt.subplots(figsize=(7, 5))
     ax.axhspan(-0.05, 0.0, color="0.85", zorder=0)
     ax.axhline(0.0, color="0.4", lw=1)
@@ -132,6 +141,7 @@ def plot_named_poses(m, d, site_id, path):
     plt.close(fig)
 
 def plot_workspace(Q, path):
+    """Scatter of the FK TCP positions of the random configurations"""
     P=np.array([SO_101_fk(q)[:3, 3] for q in Q])
     r=np.hypot(P[:,0]-POSITIONS[0,0], P[:,1]-POSITIONS[0,1])
     fig, axes=plt.subplots(1,2, figsize=(11, 4.6))
@@ -163,6 +173,7 @@ def parse_args():
     return parser.parse_args()
 
 def main():
+    """Run the named and random comparisons, save CSVs and figures"""
     args=parse_args()
     m, d, site_id=mujoco_starting(str(SCENE_XML))
     limits=derive_limits(m, N_JOINTS)
