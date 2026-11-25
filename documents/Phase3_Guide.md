@@ -31,15 +31,15 @@ Session on the arm: start (rest) pose -> HOME (0, 0, -90, 0, 0) deg -> choose a 
 | Path | Content | Status | Role |
 |---|---|---|---|
 | `src/forward_kinematics.py`, `src/jacobian.py`, `src/inverse_kinematics.py` | FK, Jacobian, IK | from Phases 1-2 | DONE |
-| `src/trajectory.py` | path pieces, shapes, waypoints, quintic time law, Cartesian -> joint planning, retiming | draft from earlier version, to port | |
-| `src/robot_control.py` | Cartesian command API, plan checks, executor (sim/real), reached check, logging | new (split out of the draft `trajectory_demo.py`) | |
-| `src/utils/constants.py` | add a trajectory block (`TRAJ_*`, `SHAPE_*`, `HOME_POSE_DEG`) | extended | |
-| `src/utils/sim_checks.py` | add a path check (contacts and lowest TCP along a joint trajectory) | extended | |
-| `tests/test_trajectory.py` | time law, shapes, limits, IK tracking, controller checks | draft, to port | |
-| `simulation/trajectory_sim.py` | all shapes in MuJoCo, table of errors, CSVs, figures, viewer | new | |
-| `hardware/trajectory_demo.py` | final demonstration on the real arm (session, dry run, checks, measures) | draft, to port | |
-| `run.py`, `README.md` | Phase 3 menu entries and instructions | extended | |
-| `results/data/`, `results/figures/` | `trajectory_<shape>_<sim\|hw>.csv/.png`, summary table | generated | |
+| `src/trajectory.py` | path pieces, shapes, waypoints, quintic time law, Cartesian -> joint planning, retiming | draft from earlier version, to port | Flavio |
+| `src/robot_control.py` | Cartesian command API, plan checks, executor (sim/real), reached check, logging | new (split out of the draft `trajectory_demo.py`) | Matteo |
+| `src/utils/constants.py` | add a trajectory block (`TRAJ_*`, `SHAPE_*`, `HOME_POSE_DEG`) | extended | Both |
+| `src/utils/sim_checks.py` | add a path check (contacts and lowest TCP along a joint trajectory) | extended | Matteo |
+| `tests/test_trajectory.py` | time law, shapes, limits, IK tracking, controller checks | draft, to port | Both |
+| `simulation/trajectory_sim.py` | all shapes in MuJoCo, table of errors, CSVs, figures, viewer | new | Flavio |
+| `hardware/trajectory_demo.py` | final demonstration on the real arm (session, dry run, checks, measures) | draft, to port | Matteo |
+| `run.py`, `README.md` | Phase 3 menu entries and instructions | extended | Matteo |
+| `results/data/`, `results/figures/` | `trajectory_<shape>_<sim\|hw>.csv/.png`, summary table | generated | Both |
 
 ## Porting the earlier draft to the Phase 2 IK
 The earlier `src/trajectory.py` and `hardware/trajectory_demo.py` were written against an older IK and do not import anymore:
